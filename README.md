@@ -72,10 +72,10 @@ Date: `<date>`
 
 ## Authors and acknowledgment
 
-LCOM Project for group GRUPO_2LEIC<m><n>_<p>.
+LCOM Project for group GRUPO_2LEIC02_1.
 Group members:
 
-<first name> <family name> (<email address>)
-<first name> <family name> (<email address>)
-<first name> <family name> (<email address>)
-<first name> <family name> (<email address>)
+Luís Castanheira (up202404122@up.pt)
+Rui Moreira (up201906355@up.pt)
+Rodrigo Almeida (up202206733@up.pt)
+Afonso Vilas (up202403577@up.pt)
