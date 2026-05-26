@@ -85,8 +85,11 @@ int graphics_draw_hline(uint16_t x, uint16_t y, uint16_t len, uint32_t color) {
   if (x >= hres || y >= vres) return 1;
   if ((uint32_t) x + len > hres) return 1;
 
-  for (uint16_t i = 0; i < len; i++) {
-    if (graphics_draw_pixel(x + i, y, color) != 0) return 1;
+  // Mudamos a variável para 'unsigned int' para evitar o crash de vetorização
+  // e isolamos a soma para o compilador não se baralhar a converter tipos.
+  for (unsigned int i = 0; i < len; i++) {
+    unsigned int current_x = x + i;
+    if (graphics_draw_pixel(current_x, y, color) != 0) return 1;
   }
 
   return 0;
@@ -98,8 +101,9 @@ int graphics_draw_rectangle(uint16_t x, uint16_t y, uint16_t width, uint16_t hei
   if ((uint32_t) x + width > hres) return 1;
   if ((uint32_t) y + height > vres) return 1;
 
-  for (uint16_t row = 0; row < height; row++) {
-    if (graphics_draw_hline(x, y + row, width, color) != 0) return 1;
+  for (unsigned int row = 0; row < height; row++) {
+    unsigned int current_y = y + row;
+    if (graphics_draw_hline(x, current_y, width, color) != 0) return 1;
   }
 
   return 0;

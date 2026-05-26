@@ -1,6 +1,6 @@
 PROG=proj
 
-SRCS=main.c graphics.c keyboard.c timer.c
+SRCS=main.c graphics.c keyboard.c timer.c player.c alien.c bullet.c shield.c game.c
 
 CPPFLAGS += -Iinclude
 
