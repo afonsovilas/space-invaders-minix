@@ -5,7 +5,7 @@
 /* Constantes para bala do jogador */
 #define BULLET_PLAYER_WIDTH 6
 #define BULLET_PLAYER_HEIGHT 14
-#define BULLET_PLAYER_SPEED 8
+#define BULLET_PLAYER_SPEED 14
 #define BULLET_PLAYER_COLOR 0x3F
 
 /* Constantes para bala alienígena */

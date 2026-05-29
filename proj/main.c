@@ -91,7 +91,7 @@ int(proj_main_loop)(int argc, char *argv[]) {
             /* Processa o input no módulo de jogo */
             if (game_get_state(&game) == GAME_STATE_MENU) {
               /* No menu, apaga o retângulo quando o jogo começa */
-              if (scancode == 0x39) { /* SPACE_MAKE */
+              if (scancode == KBD_SPACE_MAKE) {
                 graphics_draw_rectangle(300, 250, 400, 150, 0x00);
               }
             }
