@@ -3,15 +3,22 @@
 #include "keyboard.h"
 #include <stddef.h>
 
-/* Constantes de colisão */
 #define BACKGROUND_COLOR 0x00
-#define LIVES_COLOR 0x0C       /* Vermelho brilhante */
-#define BLINK_DURATION 45      /* 0.75 segundos a 60 FPS */
-#define BLINK_INTERVAL 6       /* Alterna visibilidade a cada 6 frames */
+#define LIVES_COLOR 0x0C      
+#define BLINK_DURATION 45      
+#define BLINK_INTERVAL 6       
+
+#define LIVES_START_X 20
+#define LIVES_START_Y 20
+#define LIVES_WIDTH 20
+#define LIVES_HEIGHT 10
+#define LIVES_SPACING 30
+#define LIVES_CLEAR_WIDTH (MAX_LIVES * LIVES_SPACING)
 
 /**
  * Função auxiliar para verificar colisão entre dois retângulos.
  */
+
 static bool check_collision(int x1, int y1, int w1, int h1,
                             int x2, int y2, int w2, int h2) {
     return x1 < x2 + w2 &&
@@ -31,7 +38,7 @@ int game_init(Game *game, int screen_width, int screen_height) {
     game->background_color = BACKGROUND_COLOR;
     
     game->score = 0;
-    game->lives = 3;
+    game->lives = MAX_LIVES;
     
     game->moving_left = false;
     game->moving_right = false;
@@ -40,12 +47,11 @@ int game_init(Game *game, int screen_width, int screen_height) {
     game->blink_timer = 0;
     game->blink_show = true;
     
-    /* Inicializa módulos */
     if (player_init(&game->player) != 0) {
         return -1;
     }
     
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
         if (bullet_player_init(&game->player_bullets[i]) != 0) {
             return -1;
         }
@@ -74,12 +80,9 @@ void game_start(Game *game) {
     game->state = GAME_STATE_PLAYING;
 }
 
-void game_update(Game *game) {
-    if (game == NULL || game->state != GAME_STATE_PLAYING) {
-        return;
-    }
-    
-    /* Atualiza estado de piscar (blinking) */
+/* --- Funções Auxiliares de Atualização de Frame (SRP) --- */
+
+static void game_update_blinking(Game *game) {
     if (game->is_blinking) {
         game->blink_timer--;
         if (game->blink_timer <= 0) {
@@ -91,11 +94,12 @@ void game_update(Game *game) {
             }
         }
     }
-    
-    /* Apaga objetos antigos */
+}
+
+static void game_erase_entities(Game *game) {
     player_erase(&game->player, game->background_color);
     
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
         if (game->player_bullets[i].active) {
             bullet_erase(&game->player_bullets[i], game->background_color);
         }
@@ -106,8 +110,10 @@ void game_update(Game *game) {
     }
     
     alien_swarm_erase(&game->alien_swarm, game->background_color);
+}
+
+static void game_update_positions(Game *game) {
     
-    /* Atualiza movimento do jogador */
     if (game->moving_left) {
         player_move_left(&game->player, game->screen_width);
     }
@@ -116,8 +122,7 @@ void game_update(Game *game) {
         player_move_right(&game->player, game->screen_width);
     }
     
-    /* Atualiza balas */
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
         if (game->player_bullets[i].active) {
             if (!bullet_update_player(&game->player_bullets[i])) {
                 game->player_bullets[i].active = false;
@@ -130,8 +135,9 @@ void game_update(Game *game) {
             game->alien_bullet.active = false;
         }
     }
-    
-    /* Verifica colisão bala alienígena - jogador */
+}
+
+static void game_check_player_hit(Game *game) {
     if (game->alien_bullet.active) {
         if (check_collision(game->alien_bullet.x, game->alien_bullet.y,
                            game->alien_bullet.width, game->alien_bullet.height,
@@ -154,27 +160,22 @@ void game_update(Game *game) {
             }
         }
     }
-    
-    /* Atualiza movimento dos alienigenas */
-    alien_swarm_update(&game->alien_swarm);
-    
-    if (alien_swarm_reached_player(&game->alien_swarm, game->player.y)) {
-        game->state = GAME_STATE_PLAYER_LOST;
-        return;
-    }
-    
+}
+
+static void game_aliens_shoot(Game *game) {
     int shooter_index;
     if (game->alien_bullet.active == false && 
         alien_swarm_get_shooter(&game->alien_swarm, &shooter_index)) {
         bullet_fire_from_alien(&game->alien_bullet,
-                              game->alien_swarm.aliens[shooter_index].x,
-                              game->alien_swarm.aliens[shooter_index].y,
-                              game->alien_swarm.aliens[shooter_index].width,
-                              game->alien_swarm.aliens[shooter_index].height);
+                               game->alien_swarm.aliens[shooter_index].x,
+                               game->alien_swarm.aliens[shooter_index].y,
+                               game->alien_swarm.aliens[shooter_index].width,
+                               game->alien_swarm.aliens[shooter_index].height);
     }
-    
-    /* Colisão bala do jogador - escudo */
-    for (int b = 0; b < 3; b++) {
+}
+
+static void game_check_player_bullet_shield_collision(Game *game) {
+    for (int b = 0; b < MAX_PLAYER_BULLETS; b++) {
         if (game->player_bullets[b].active) {
             for (int i = 0; i < SHIELD_COUNT; i++) {
                 if (game->shields.shields[i].alive) {
@@ -191,8 +192,9 @@ void game_update(Game *game) {
             }
         }
     }
-    
-    /* Colisão bala alienígena - escudo */
+}
+
+static void game_check_alien_bullet_shield_collision(Game *game) {
     if (game->alien_bullet.active) {
         for (int i = 0; i < SHIELD_COUNT; i++) {
             if (game->shields.shields[i].alive) {
@@ -208,9 +210,10 @@ void game_update(Game *game) {
             }
         }
     }
-    
-    /* Colisão bala do jogador - alienigena */
-    for (int b = 0; b < 3; b++) {
+}
+
+static void game_check_player_bullet_alien_collision(Game *game) {
+    for (int b = 0; b < MAX_PLAYER_BULLETS; b++) {
         if (game->player_bullets[b].active) {
             for (int i = 0; i < ALIEN_COUNT; i++) {
                 if (game->alien_swarm.aliens[i].alive) {
@@ -235,6 +238,36 @@ void game_update(Game *game) {
     }
 }
 
+/* --- Função Principal de Atualização do Jogo --- */
+
+void game_update(Game *game) {
+    if (game == NULL || game->state != GAME_STATE_PLAYING) {
+        return;
+    }
+    
+    game_update_blinking(game);
+    game_erase_entities(game);
+    game_update_positions(game);
+    
+    game_check_player_hit(game);
+    if (game->state != GAME_STATE_PLAYING) {
+        return;
+    }
+    
+    alien_swarm_update(&game->alien_swarm);
+    
+    if (alien_swarm_reached_player(&game->alien_swarm, game->player.y)) {
+        game->state = GAME_STATE_PLAYER_LOST;
+        return;
+    }
+    
+    game_aliens_shoot(game);
+    
+    game_check_player_bullet_shield_collision(game);
+    game_check_alien_bullet_shield_collision(game);
+    game_check_player_bullet_alien_collision(game);
+}
+
 void game_draw(Game *game) {
     if (game == NULL) {
         return;
@@ -244,7 +277,7 @@ void game_draw(Game *game) {
         player_draw(&game->player);
     }
     
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
         if (game->player_bullets[i].active) {
             bullet_draw(&game->player_bullets[i]);
         }
@@ -257,10 +290,9 @@ void game_draw(Game *game) {
     alien_swarm_draw(&game->alien_swarm);
     shield_array_draw(&game->shields);
     
-    int start_x = 20;
-    graphics_draw_rectangle(start_x, 20, 80, 10, game->background_color);
+    graphics_draw_rectangle(LIVES_START_X, LIVES_START_Y, LIVES_CLEAR_WIDTH, LIVES_HEIGHT, game->background_color);
     for (int i = 0; i < game->lives; i++) {
-        graphics_draw_rectangle(start_x + i * 30, 20, 20, 10, LIVES_COLOR);
+        graphics_draw_rectangle(LIVES_START_X + i * LIVES_SPACING, LIVES_START_Y, LIVES_WIDTH, LIVES_HEIGHT, LIVES_COLOR);
     }
 }
 
@@ -271,7 +303,7 @@ void game_erase(Game *game) {
     
     player_erase(&game->player, game->background_color);
     
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
         if (game->player_bullets[i].active) {
             bullet_erase(&game->player_bullets[i], game->background_color);
         }
@@ -304,13 +336,14 @@ void game_fire_player_bullet(Game *game) {
         return;
     }
     
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
         if (!game->player_bullets[i].active) {
             bullet_fire_from_player(&game->player_bullets[i],
                                    game->player.x, game->player.y,
                                    game->player.width, game->player.height);
             break;
-        }    }
+        }
+    }
 }
 
 GameState game_get_state(const Game *game) {
@@ -342,13 +375,11 @@ void game_handle_keyboard_input(Game *game, uint8_t scancode, bool *running) {
         return;
     }
     
-    /* ESC para sair */
     if (scancode == KBD_ESC_BREAK) {
         *running = false;
         return;
     }
     
-    /* Menu: SPACE para começar o jogo */
     if (game->state == GAME_STATE_MENU) {
         if (scancode == KBD_SPACE_MAKE) {
             game_start(game);

@@ -8,6 +8,9 @@
 #include "alien.h"
 #include "shield.h"
 
+#define MAX_PLAYER_BULLETS 3
+#define MAX_LIVES 3
+
 /**
  * Estados do jogo.
  */
@@ -26,7 +29,7 @@ typedef struct {
     GameState state;
     
     Player player;
-    Bullet player_bullets[3];
+    Bullet player_bullets[MAX_PLAYER_BULLETS];
     Bullet alien_bullet;
     
     AlienSwarm alien_swarm;
