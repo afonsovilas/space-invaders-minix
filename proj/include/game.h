@@ -26,7 +26,7 @@ typedef struct {
     GameState state;
     
     Player player;
-    Bullet player_bullet;
+    Bullet player_bullets[3];
     Bullet alien_bullet;
     
     AlienSwarm alien_swarm;
@@ -45,6 +45,11 @@ typedef struct {
     /* Flags de input */
     bool moving_left;
     bool moving_right;
+    
+    /* Blinking state */
+    bool is_blinking;
+    int blink_timer;
+    bool blink_show;
 } Game;
 
 /**
