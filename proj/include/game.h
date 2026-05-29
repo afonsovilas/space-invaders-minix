@@ -7,132 +7,85 @@
 #include "bullet.h"
 #include "alien.h"
 #include "shield.h"
+#include "mouse.h"
 
 /**
- * Estados do jogo.
+ * @defgroup game Game
+ * Core game state machine for Star Shooter.
+ * @{
  */
+
+/** Game state machine. */
 typedef enum {
-    GAME_STATE_MENU,            /* Menu inicial */
-    GAME_STATE_PLAYING,         /* Jogo em progresso */
-    GAME_STATE_PLAYER_WON,      /* Jogador venceu */
-    GAME_STATE_PLAYER_LOST      /* Jogador perdeu */
+  GAME_STATE_MENU,         /**< Main menu                */
+  GAME_STATE_PLAYING,      /**< Game in progress         */
+  GAME_STATE_PLAYER_WON,   /**< Player destroyed all aliens */
+  GAME_STATE_PLAYER_LOST   /**< Player lost all lives    */
 } GameState;
 
 /**
- * Estrutura principal do jogo.
- * Contém todos os objetos e estado do jogo.
+ * Root game structure – owns all game objects and state.
  */
 typedef struct {
-    GameState state;
-    
-    Player player;
-    Bullet player_bullet;
-    Bullet alien_bullet;
-    
-    AlienSwarm alien_swarm;
-    ShieldArray shields;
-    
-    int score;
-    int lives;
-    
-    /* Cores */
-    uint32_t background_color;
-    
-    /* Dimensões da tela */
-    int screen_width;
-    int screen_height;
-    
-    /* Flags de input */
-    bool moving_left;
-    bool moving_right;
+  GameState state;
+
+  Player     player;
+  Bullet     player_bullet;
+  Bullet     alien_bullet;
+  AlienSwarm alien_swarm;
+  ShieldArray shields;
+
+  int score;
+  int lives;
+
+  int screen_width;
+  int screen_height;
+
+  /* Keyboard movement flags */
+  bool moving_left;
+  bool moving_right;
+
+  /* Mouse cursor state */
+  MouseState mouse;
 } Game;
 
-/**
- * Inicializa o estado do jogo.
- * 
- * @param game Pointer para a estrutura Game
- * @param screen_width Largura da tela
- * @param screen_height Altura da tela
- * @return 0 se bem-sucedido, -1 caso contrário
- */
+/** Initialise the game (does not start it — state = MENU). */
 int game_init(Game *game, int screen_width, int screen_height);
 
-/**
- * Inicia um novo jogo (transição do menu para playing).
- * 
- * @param game Pointer para a estrutura Game
- */
+/** Transition from MENU → PLAYING. */
 void game_start(Game *game);
 
-/**
- * Atualiza toda a lógica do jogo a cada frame.
- * 
- * @param game Pointer para a estrutura Game
- */
+/** Update game logic one tick (collisions, movement, spawning). */
 void game_update(Game *game);
 
-/**
- * Desenha todos os objetos do jogo.
- * 
- * @param game Pointer para a estrutura Game
- */
+/** Draw all game objects + HUD into the back-buffer. */
 void game_draw(Game *game);
 
 /**
- * Apaga todos os objetos do jogo.
- * 
- * @param game Pointer para a estrutura Game
+ * Draw a "game over" / "you win" screen.
+ * Does NOT call graphics_flush() — caller must flush.
  */
-void game_erase(Game *game);
+void game_draw_game_over(const Game *game);
+
+/** Process a keyboard scancode (movement, fire, ESC, menu SPACE). */
+void game_handle_keyboard_input(Game *game, uint8_t scancode, bool *running);
 
 /**
- * Define a direção do movimento do jogador.
- * 
- * @param game Pointer para a estrutura Game
- * @param moving_left true para mover à esquerda
- * @param moving_right true para mover à direita
+ * Process a fully-assembled 3-byte mouse packet.
+ * Updates game->mouse (position, buttons) and fires on left-click.
+ * @param bytes  3-byte packet, bytes[0] is the sync byte.
  */
-void game_set_player_movement(Game *game, bool moving_left, bool moving_right);
+void game_handle_mouse_packet(Game *game, const uint8_t bytes[3]);
 
-/**
- * Atira uma bala do jogador (se não houver uma ativa).
- * 
- * @param game Pointer para a estrutura Game
- */
-void game_fire_player_bullet(Game *game);
-
-/**
- * Retorna o estado atual do jogo.
- * 
- * @param game Pointer para a estrutura Game
- * @return Estado atual do jogo
- */
+/** Return the current game state. */
 GameState game_get_state(const Game *game);
 
-/**
- * Obtém a pontuação atual.
- * 
- * @param game Pointer para a estrutura Game
- * @return Pontuação
- */
+/** Return the current score. */
 int game_get_score(const Game *game);
 
-/**
- * Obtém o número de vidas restantes.
- * 
- * @param game Pointer para a estrutura Game
- * @return Vidas restantes
- */
+/** Return remaining lives. */
 int game_get_lives(const Game *game);
 
-/**
- * Processa input do teclado (scancode).
- * Trata movimentos do jogador, disparos e menu.
- * 
- * @param game Pointer para a estrutura Game
- * @param scancode Código da tecla pressionada
- * @param running Pointer para flag de saída (alterada se ESC for pressionado)
- */
-void game_handle_keyboard_input(Game *game, uint8_t scancode, bool *running);
+/**@}*/
 
 #endif /* GAME_H */
