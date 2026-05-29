@@ -153,6 +153,7 @@ void game_update(Game *game) {
                                    game->player_bullet.width, game->player_bullet.height,
                                    game->shields.shields[i].x, game->shields.shields[i].y,
                                    game->shields.shields[i].width, game->shields.shields[i].height)) {
+                    shield_erase(&game->shields, i, game->background_color);
                     shield_destroy(&game->shields, i);
                     game->player_bullet.active = false;
                     break;
@@ -169,6 +170,7 @@ void game_update(Game *game) {
                                    game->alien_bullet.width, game->alien_bullet.height,
                                    game->shields.shields[i].x, game->shields.shields[i].y,
                                    game->shields.shields[i].width, game->shields.shields[i].height)) {
+                    shield_erase(&game->shields, i, game->background_color);
                     shield_destroy(&game->shields, i);
                     game->alien_bullet.active = false;
                     break;
@@ -236,6 +238,12 @@ void game_erase(Game *game) {
     }
     
     alien_swarm_erase(&game->alien_swarm, game->background_color);
+    
+    for (int i = 0; i < SHIELD_COUNT; i++) {
+        if (game->shields.shields[i].alive) {
+            shield_erase(&game->shields, i, game->background_color);
+        }
+    }
 }
 
 void game_set_player_movement(Game *game, bool moving_left, bool moving_right) {
