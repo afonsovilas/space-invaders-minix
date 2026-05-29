@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define ALIEN_ROWS 3
+#define ALIEN_ROWS 6
 #define ALIEN_COLS 8
 #define ALIEN_COUNT (ALIEN_ROWS * ALIEN_COLS)
 
