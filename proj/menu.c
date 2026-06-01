@@ -23,10 +23,11 @@
 #define BTN_H      68
 #define BTN_BRD     2   /* border thickness */
 
-#define BTN_PLAY_Y  230
-#define BTN_QUIT_Y  325
+#define BTN_PLAY_Y   230
+#define BTN_SCORES_Y (BTN_PLAY_Y + BTN_H + 15)
+#define BTN_QUIT_Y   (BTN_SCORES_Y + BTN_H + 15)
 
-/* Controls section */
+/* Controls section: sits below the last button */
 #define CTRL_Y  (BTN_QUIT_Y + BTN_H + 36)
 
 /* ------------------------------------------------------------------ */
@@ -45,13 +46,15 @@
 #define COL_SHOOT_WORD  0x0Bu  /* cyan       */
 #define COL_SEP         0x08u  /* dark grey  */
 
-#define COL_BTN_NORM_OUT 0x09u
-#define COL_BTN_NORM_IN  0x01u
-#define COL_BTN_PLAY_OUT 0x0Au
-#define COL_BTN_PLAY_IN  0x02u
-#define COL_BTN_QUIT_OUT 0x0Cu
-#define COL_BTN_QUIT_IN  0x04u
-#define COL_BTN_TEXT     0x0Fu
+#define COL_BTN_NORM_OUT  0x09u
+#define COL_BTN_NORM_IN   0x01u
+#define COL_BTN_PLAY_OUT  0x0Au
+#define COL_BTN_PLAY_IN   0x02u
+#define COL_BTN_SCORES_OUT 0x0Bu
+#define COL_BTN_SCORES_IN  0x03u
+#define COL_BTN_QUIT_OUT  0x0Cu
+#define COL_BTN_QUIT_IN   0x04u
+#define COL_BTN_TEXT      0x0Fu
 
 #define COL_CTRL_HDR    0x0Bu
 #define COL_CTRL_TEXT   0x07u
@@ -140,12 +143,13 @@ static void draw_cursor(int cx, int cy) {
 
 void menu_init(Menu *m) {
   if (m == NULL) return;
-  m->mouse_x   = SCREEN_W / 2;
-  m->mouse_y   = SCREEN_H / 2;
-  m->play_hover = false;
-  m->quit_hover = false;
-  m->lb_prev    = false;
-  m->action     = MENU_ACTION_NONE;
+  m->mouse_x     = SCREEN_W / 2;
+  m->mouse_y     = SCREEN_H / 2;
+  m->play_hover   = false;
+  m->scores_hover = false;
+  m->quit_hover   = false;
+  m->lb_prev      = false;
+  m->action       = MENU_ACTION_NONE;
 }
 
 void menu_update(Menu *m, int cursor_x, int cursor_y, bool lb) {
@@ -155,13 +159,15 @@ void menu_update(Menu *m, int cursor_x, int cursor_y, bool lb) {
   m->mouse_y = cursor_y;
   m->action  = MENU_ACTION_NONE;
 
-  m->play_hover = point_in_rect(cursor_x, cursor_y, BTN_X, BTN_PLAY_Y, BTN_W, BTN_H);
-  m->quit_hover = point_in_rect(cursor_x, cursor_y, BTN_X, BTN_QUIT_Y, BTN_W, BTN_H);
+  m->play_hover   = point_in_rect(cursor_x, cursor_y, BTN_X, BTN_PLAY_Y,   BTN_W, BTN_H);
+  m->scores_hover = point_in_rect(cursor_x, cursor_y, BTN_X, BTN_SCORES_Y, BTN_W, BTN_H);
+  m->quit_hover   = point_in_rect(cursor_x, cursor_y, BTN_X, BTN_QUIT_Y,   BTN_W, BTN_H);
 
   /* Trigger on rising edge of left button (click = press + release) */
   if (!lb && m->lb_prev) {
-    if (m->play_hover) m->action = MENU_ACTION_PLAY;
-    if (m->quit_hover) m->action = MENU_ACTION_QUIT;
+    if (m->play_hover)   m->action = MENU_ACTION_PLAY;
+    if (m->scores_hover) m->action = MENU_ACTION_SCORES;
+    if (m->quit_hover)   m->action = MENU_ACTION_QUIT;
   }
 
   m->lb_prev = lb;
@@ -221,11 +227,21 @@ void menu_draw(const Menu *m) {
     uint32_t out = m->play_hover ? COL_BTN_PLAY_OUT : COL_BTN_NORM_OUT;
     uint32_t in  = m->play_hover ? COL_BTN_PLAY_IN  : COL_BTN_NORM_IN;
     draw_button(BTN_X, BTN_PLAY_Y, BTN_W, BTN_H, "PLAY", m->play_hover, out, in);
-    /* Arrow indicator on hover */
     if (m->play_hover)
       font_draw_string(BTN_X + BTN_W + 10,
                        BTN_PLAY_Y + BTN_H / 2 - FONT_GLYPH_H,
                        ">", COL_BTN_PLAY_OUT, 2);
+  }
+
+  /* ---- SCORES button ---- */
+  {
+    uint32_t out = m->scores_hover ? COL_BTN_SCORES_OUT : COL_BTN_NORM_OUT;
+    uint32_t in  = m->scores_hover ? COL_BTN_SCORES_IN  : COL_BTN_NORM_IN;
+    draw_button(BTN_X, BTN_SCORES_Y, BTN_W, BTN_H, "SCORES", m->scores_hover, out, in);
+    if (m->scores_hover)
+      font_draw_string(BTN_X + BTN_W + 10,
+                       BTN_SCORES_Y + BTN_H / 2 - FONT_GLYPH_H,
+                       ">", COL_BTN_SCORES_OUT, 2);
   }
 
   /* ---- QUIT button ---- */

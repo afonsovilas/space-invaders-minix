@@ -10,6 +10,7 @@
 #include "timer.h"
 #include "mouse.h"
 #include "menu.h"
+#include "scoreboard.h"
 #include "i8042.h"
 
 /* ------------------------------------------------------------------ */
@@ -176,6 +177,8 @@ int(proj_main_loop)(int argc, char *argv[]) {
 
               if (state == GAME_STATE_MENU) {
                 menu_update(&menu, cursor_x, cursor_y, lb);
+              } else if (state == GAME_STATE_SCOREBOARD) {
+                (void) lb;
               } else {
                 /* Propagate cursor + button state to game */
                 game.mouse.x  = cursor_x;
@@ -202,6 +205,10 @@ int(proj_main_loop)(int argc, char *argv[]) {
         MenuAction action = menu_get_action(&menu);
         if (action == MENU_ACTION_PLAY) {
           game_start(&game);
+          menu_init(&menu);
+        } else if (action == MENU_ACTION_SCORES) {
+          game_enter_scoreboard(&game);
+          menu_init(&menu);
         } else if (action == MENU_ACTION_QUIT) {
           running = false;
         }
@@ -217,8 +224,12 @@ int(proj_main_loop)(int argc, char *argv[]) {
         draw_crosshair(game.mouse.x, game.mouse.y);
         graphics_flush();
 
+      } else if (state == GAME_STATE_SCOREBOARD) {
+        game_draw_scoreboard(&game);
+        graphics_flush();
+
       } else {
-        /* PLAYER_WON or PLAYER_LOST – show end screen until ESC */
+        /* PLAYER_WON or PLAYER_LOST */
         game_draw_game_over(&game);
         graphics_flush();
       }
@@ -226,6 +237,7 @@ int(proj_main_loop)(int argc, char *argv[]) {
   }
 
   /* ---- Cleanup ---- */
+  scoreboard_free(&game.scoreboard);
   (void) proj_mouse_disable_reporting();
   (void) mouse_unsubscribe_int();
   (void) game_timer_unsubscribe_int();

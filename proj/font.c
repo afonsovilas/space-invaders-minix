@@ -1,5 +1,6 @@
 #include "font.h"
 #include "graphics.h"
+#include <stddef.h>
 
 /**
  * 5×7 pixel glyph bitmaps for ASCII 0x20 (space) through 0x5A ('Z').
