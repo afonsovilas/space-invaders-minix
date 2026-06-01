@@ -1,11 +1,11 @@
-#include <lcom/lcf.h>
 
+#include <lcom/lcf.h>
 #include <machine/int86.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include "graphics.h"
 
 #include "graphics.h"
 
@@ -19,7 +19,7 @@ static uint16_t vres;
 static unsigned bytes_per_pixel;
 static unsigned bytes_per_line;
 
-/* ---- Internal helpers (same as lab5) ---- */
+/* ---- Module state ---- */
 
 static int video_set_mode(uint16_t mode) {
   reg86_t r;

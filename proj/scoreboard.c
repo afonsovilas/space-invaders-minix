@@ -1,4 +1,6 @@
 #include "scoreboard.h"
+#include "graphics.h"
+#include "font.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -63,6 +65,8 @@ int scoreboard_load(Scoreboard *sb) {
 
     FILE *fp = fopen(SCOREBOARD_FILE, "r");
     if (fp == NULL) {
+        FILE *created = fopen(SCOREBOARD_FILE, "w");
+        if (created != NULL) fclose(created);
         return 0;
     }
 
@@ -149,22 +153,139 @@ void scoreboard_free(Scoreboard *sb) {
 }
 
 void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h) {
-    /*
-     * TODO: Implement once graphics_draw_string is available in graphics.c.
-     *
-     * Planned layout (centred on screen):
-     *
-     *   SCOREBOARD
-     *   ──────────────────────────────────────
-     *   #   NAME             SCORE   DATE
-     *   1   Alice            1500    2026-05-29
-     *   2   Bob               900    2026-05-28
-     *   ...                        (top SCOREBOARD_MAX_DISPLAY entries)
-     *
-     * Each row rendered with graphics_draw_string at scale 2.
-     * Timestamp formatted with strftime(..., "%Y-%m-%d", localtime(...)).
-     */
-    (void) sb;
-    (void) screen_w;
-    (void) screen_h;
+    if (sb == NULL || screen_w <= 0 || screen_h <= 0) return;
+
+    /* ------------------------------------------------------------------ *
+     * Visual constants                                                     *
+     * ------------------------------------------------------------------ */
+
+    /* 8-bit VGA palette indices */
+    enum {
+        COLOR_TITLE     = 0x0B, /* bright cyan   – title & decorations    */
+        COLOR_HEADER    = 0x07, /* light gray    – column headers         */
+        COLOR_GOLD      = 0x06, /* dark yellow   – 1st place (gold/amber) */
+        COLOR_YELLOW    = 0x0E, /* bright yellow – 2nd place              */
+        COLOR_WHITE     = 0x0F, /* bright white  – 3rd place              */
+        COLOR_NORMAL    = 0x0F, /* bright white  – 4th place and below    */
+        COLOR_SEPARATOR = 0x08, /* dark gray     – separator lines        */
+        COLOR_BG        = 0x00  /* black         – background             */
+    };
+
+    /* Row padding (in pixels, unscaled) added between rows               */
+    const int ROW_PAD    = 3;
+    /* Top margin before the title                                         */
+    const int TOP_MARGIN = 30;
+
+    /* ------------------------------------------------------------------ *
+     * Per-rank visual parameters                                           *
+     * rank_scale[0] → 1st place, [1] → 2nd, [2] → 3rd, [3] → 4th+       *
+     * ------------------------------------------------------------------ */
+    static const uint8_t  rank_scale[4] = { 3, 2, 2, 2 };
+    static const uint32_t rank_color[4] = {
+        COLOR_GOLD, COLOR_YELLOW, COLOR_WHITE, COLOR_NORMAL
+    };
+
+    int cur_y = TOP_MARGIN;
+
+    /* ------------------------------------------------------------------ *
+     * 1.  Title  "SCOREBOARD"                                             *
+     * ------------------------------------------------------------------ */
+    {
+        const char *title  = "SCOREBOARD";
+        const int   sc     = 3;
+        int tw = font_string_width(title, sc);
+        int tx = (screen_w - tw) / 2;
+        font_draw_string(tx, cur_y, title, COLOR_TITLE, sc);
+        cur_y += FONT_GLYPH_H * sc + ROW_PAD * 2;
+    }
+
+    /* ------------------------------------------------------------------ *
+     * 2.  Separator under the title                                        *
+     * ------------------------------------------------------------------ */
+    {
+        const int SEP_MARGIN = 40;
+        graphics_draw_rectangle(
+            (uint16_t) SEP_MARGIN,
+            (uint16_t) cur_y,
+            (uint16_t)(screen_w - 2 * SEP_MARGIN),
+            2,
+            COLOR_SEPARATOR);
+        cur_y += 2 + ROW_PAD * 2;
+    }
+
+    /* ------------------------------------------------------------------ *
+     * 3.  Column headers                                                   *
+     * ------------------------------------------------------------------ */
+    {
+        const char *hdr = "#   NAME             SCORE";
+        const int   sc  = 1;
+        int hw = font_string_width(hdr, sc);
+        int hx = (screen_w - hw) / 2;
+        font_draw_string(hx, cur_y, hdr, COLOR_HEADER, sc);
+        cur_y += FONT_GLYPH_H * sc + ROW_PAD;
+
+        /* thin separator under headers */
+        graphics_draw_rectangle(
+            (uint16_t)(screen_w / 4),
+            (uint16_t) cur_y,
+            (uint16_t)(screen_w / 2),
+            1,
+            COLOR_SEPARATOR);
+        cur_y += 1 + ROW_PAD * 2;
+    }
+
+    /* ------------------------------------------------------------------ *
+     * 4.  Scoreboard entries                                               *
+     * ------------------------------------------------------------------ */
+    int display_count = sb->count < SCOREBOARD_MAX_DISPLAY
+                        ? sb->count
+                        : SCOREBOARD_MAX_DISPLAY;
+
+    for (int i = 0; i < display_count; i++) {
+        /* Rank-based visual parameters (0-indexed, cap at index 3)        */
+        int      param_idx = i < 3 ? i : 3;
+        int      sc        = (int) rank_scale[param_idx];
+        uint32_t col       = rank_color[param_idx];
+
+        const ScoreEntry *e = &sb->entries[i];
+
+        /* Build the entry string: "#N  NAME  SCORE"                       */
+        char buf[64];
+        snprintf(buf, sizeof(buf), "#%-2d %-20s %d", i + 1, e->name, e->score);
+
+        /* Centre the text horizontally                                     */
+        int tw = font_string_width(buf, sc);
+        int tx = (screen_w - tw) / 2;
+
+        font_draw_string(tx, cur_y, buf, col, sc);
+
+        /* Advance y by this row's rendered height plus padding            */
+        cur_y += FONT_GLYPH_H * sc + ROW_PAD * sc;
+
+        /* Safety: stop if we'd go off screen                              */
+        if (cur_y >= screen_h - FONT_GLYPH_H) break;
+    }
+
+    /* ------------------------------------------------------------------ *
+     * 5.  Empty-list placeholder                                           *
+     * ------------------------------------------------------------------ */
+    if (display_count == 0) {
+        const char *empty = "NO SCORES YET";
+        const int   sc    = 2;
+        int tw = font_string_width(empty, sc);
+        int tx = (screen_w - tw) / 2;
+        font_draw_string(tx, cur_y, empty, COLOR_NORMAL, sc);
+    }
+
+    /* ------------------------------------------------------------------ *
+     * 6.  Footer                                                           *
+     * ------------------------------------------------------------------ */
+    {
+        const char *footer = "PRESS SPACE TO RETURN TO MENU";
+        const int   sc     = 2;
+        int fw = font_string_width(footer, sc);
+        int fx = (screen_w - fw) / 2;
+        int fy = screen_h - FONT_GLYPH_H * sc - 20;
+        font_draw_string(fx, fy, footer, COLOR_TITLE, sc);
+    }
 }

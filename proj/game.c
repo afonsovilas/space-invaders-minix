@@ -2,9 +2,11 @@
 #include "graphics.h"
 #include "keyboard.h"
 #include "font.h"
+#include "scoreboard.h"
 #include "i8042.h"
 
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* ------------------------------------------------------------------ */
@@ -64,11 +66,35 @@ static void build_hud_str(const char *prefix, int n, char *buf, int bufsize) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Random player names assigned automatically at game-over            */
+/* ------------------------------------------------------------------ */
+
+static const char * const RANDOM_NAMES[] = {
+  "ACE", "NOVA", "BLAZE", "GHOST", "VIPER",
+  "STORM", "HAWK", "TITAN", "ECHO", "ZERO"
+};
+#define RANDOM_NAMES_COUNT 10
+
+/**
+ * Called on every game-ending condition (win or loss).
+ * Saves the score under a random retro name and transitions to the
+ * scoreboard screen. The scoreboard is updated in-memory immediately
+ * so the new entry is visible without reloading from disk.
+ */
+static void game_end(Game *game) {
+  const char *name = RANDOM_NAMES[rand() % RANDOM_NAMES_COUNT];
+  scoreboard_add(&game->scoreboard, name, game->score);
+  game->state = GAME_STATE_SCOREBOARD;
+}
+
+/* ------------------------------------------------------------------ */
 /* Public API                                                          */
 /* ------------------------------------------------------------------ */
 
 int game_init(Game *game, int screen_width, int screen_height) {
   if (game == NULL) return -1;
+
+  scoreboard_free(&game->scoreboard);
 
   game->state            = GAME_STATE_MENU;
   game->screen_width     = screen_width;
@@ -104,6 +130,8 @@ int game_init(Game *game, int screen_width, int screen_height) {
   if (bullet_alien_init(&game->alien_bullet)     != 0) return -1;
   if (alien_swarm_init(&game->alien_swarm)       != 0) return -1;
   if (shield_array_init(&game->shields)          != 0) return -1;
+
+  scoreboard_load(&game->scoreboard);
 
   return 0;
 }
@@ -181,7 +209,7 @@ static void game_check_player_hit(Game *game) {
                 game->alien_bullet.active = false;
                 
                 if (game->lives <= 0) {
-                    game->state = GAME_STATE_PLAYER_LOST;
+                    game_end(game);
                     return;
                 }
                 
@@ -259,7 +287,7 @@ static void game_check_player_bullet_alien_collision(Game *game) {
                         game->score += 100;
                         
                         if (alien_swarm_all_dead(&game->alien_swarm)) {
-                            game->state = GAME_STATE_PLAYER_WON;
+                            game_end(game);
                             return;
                         }
                         
@@ -296,7 +324,7 @@ void game_update(Game *game) {
     alien_swarm_update(&game->alien_swarm);
     
     if (alien_swarm_reached_player(&game->alien_swarm, game->player.y)) {
-        game->state = GAME_STATE_PLAYER_LOST;
+        game_end(game);
         return;
     }
     
@@ -424,7 +452,16 @@ void game_draw_game_over(const Game *game) {
 void game_handle_keyboard_input(Game *game, uint8_t scancode, bool *running) {
   if (game == NULL || running == NULL) return;
 
-  /* ESC always exits */
+  if (game->state == GAME_STATE_SCOREBOARD) {
+    if (scancode == KBD_SPACE_MAKE) {
+      game_init(game, game->screen_width, game->screen_height);
+    } else if (scancode == KBD_ESC_BREAK) {
+      *running = false;
+    }
+    return;
+  }
+
+  /* ESC always exits from any other state */
   if (scancode == KBD_ESC_BREAK) { *running = false; return; }
 
   if (game->state == GAME_STATE_MENU) {
@@ -439,6 +476,17 @@ void game_handle_keyboard_input(Game *game, uint8_t scancode, bool *running) {
     else if (scancode == KBD_D_BREAK)    game->moving_right = false;
     if      (scancode == KBD_SPACE_MAKE) game_fire_player_bullet(game);
   }
+}
+
+void game_draw_scoreboard(const Game *game) {
+  if (game == NULL) return;
+  graphics_clear(0x00u);
+  scoreboard_draw(&game->scoreboard, game->screen_width, game->screen_height);
+}
+
+void game_enter_scoreboard(Game *game) {
+  if (game == NULL) return;
+  game->state = GAME_STATE_SCOREBOARD;
 }
 
 void game_handle_mouse_packet(Game *game, const uint8_t bytes[3]) {

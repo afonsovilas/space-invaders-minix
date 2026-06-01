@@ -14,7 +14,7 @@
 #define SCOREBOARD_NAME_LEN 32
 
 /** Absolute path to the append-only CSV log file used for persistent score storage. */
-#define SCOREBOARD_FILE "/proj/scoreboard.csv"
+#define SCOREBOARD_FILE "/scoreboard.csv"
 
 /**
  * @brief Represents a single scoreboard entry.

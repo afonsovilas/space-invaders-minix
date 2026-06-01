@@ -5,6 +5,7 @@
 #include "bullet.h"
 #include "mouse.h"
 #include "player.h"
+#include "scoreboard.h"
 #include "shield.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -20,10 +21,11 @@
 
 /** Game state machine. */
 typedef enum {
-  GAME_STATE_MENU,       /**< Main menu                */
-  GAME_STATE_PLAYING,    /**< Game in progress         */
-  GAME_STATE_PLAYER_WON, /**< Player destroyed all aliens */
-  GAME_STATE_PLAYER_LOST /**< Player lost all lives    */
+  GAME_STATE_MENU,        /**< Main menu                           */
+  GAME_STATE_PLAYING,     /**< Game in progress                    */
+  GAME_STATE_PLAYER_WON,  /**< Player destroyed all aliens (transient) */
+  GAME_STATE_PLAYER_LOST, /**< Player lost all lives   (transient) */
+  GAME_STATE_SCOREBOARD   /**< Scoreboard screen                   */
 } GameState;
 
 /**
@@ -41,6 +43,9 @@ typedef struct {
 
   int score;
   int lives;
+
+  /** In-memory scoreboard (loaded once, updated on game-over). */
+  Scoreboard scoreboard;
 
   /* Cores */
   uint32_t background_color;
@@ -83,6 +88,18 @@ void game_erase(Game *game);
  * Does NOT call graphics_flush() — caller must flush.
  */
 void game_draw_game_over(const Game *game);
+
+/**
+ * Draw the scoreboard screen into the back-buffer.
+ * Clears the screen first. Does NOT call graphics_flush() — caller must flush.
+ */
+void game_draw_scoreboard(const Game *game);
+
+/**
+ * Transition from MENU → SCOREBOARD (called when the user clicks SCORES).
+ * Does not save or load any score; just changes state.
+ */
+void game_enter_scoreboard(Game *game);
 
 /** Fires a bullet from the player if one is available. */
 void game_fire_player_bullet(Game *game);

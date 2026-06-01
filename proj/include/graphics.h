@@ -49,6 +49,4 @@ unsigned graphics_get_bytes_per_line(void);
 /** Return bytes per pixel. */
 unsigned graphics_get_bytes_per_pixel(void);
 
-/**@}*/
-
-#endif /* GRAPHICS_H */
+#endif
