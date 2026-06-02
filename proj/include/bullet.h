@@ -59,34 +59,6 @@ int bullet_init(Bullet *bullet, const BulletConfig *config);
 bool bullet_update(Bullet *bullet, int screen_height);
 
 /**
- * Inicializa a estrutura de uma bala (jogador).
- * 
- * @param bullet Pointer para a estrutura Bullet
- * @return 0 se bem-sucedido, -1 caso contrário
- */
-int bullet_player_init(Bullet *bullet);
-
-/**
- * Atira uma bala a partir da posição do jogador.
- * 
- * @param bullet Pointer para a estrutura Bullet
- * @param player_x Posição X do jogador
- * @param player_y Posição Y do jogador
- * @param player_width Largura do jogador
- * @param player_height Altura do jogador
- */
-void bullet_fire_from_player(Bullet *bullet, int player_x, int player_y, 
-                             int player_width, int player_height);
-
-/**
- * Move a bala do jogador (para cima).
- * 
- * @param bullet Pointer para a estrutura Bullet
- * @return true se a bala ainda está ativa, false se saiu da tela
- */
-bool bullet_update_player(Bullet *bullet);
-
-/**
  * Desenha a bala na tela.
  * 
  * @param bullet Pointer para a estrutura Bullet
