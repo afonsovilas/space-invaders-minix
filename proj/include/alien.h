@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "bullet.h"
 
 #define ALIEN_ROWS 6
 #define ALIEN_COLS 8
@@ -98,5 +99,20 @@ void alien_swarm_draw(const AlienSwarm *swarm);
  * @param background_color Cor de fundo
  */
 void alien_swarm_erase(const AlienSwarm *swarm, uint32_t background_color);
+
+/**
+ * Bullet configuration for the alien shooter.
+ * Pass to bullet_init() when creating an alien bullet.
+ */
+extern const BulletConfig ALIEN_BULLET_CONFIG;
+
+/**
+ * Fires a bullet from the given alien.
+ * Positions the bullet at the bottom-centre of the alien and marks it active.
+ *
+ * @param bullet  Pointer to the Bullet to fire.
+ * @param alien   The alien that is shooting.
+ */
+void alien_fire_bullet(Bullet *bullet, const Alien *alien);
 
 #endif /* ALIEN_H */
