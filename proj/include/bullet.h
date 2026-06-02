@@ -5,6 +5,26 @@
 #include <stdbool.h>
 
 /**
+ * Direction a bullet travels on screen.
+ */
+typedef enum {
+    BULLET_DIR_UP   = -1,   /**< Moves towards the top of the screen (player bullet). */
+    BULLET_DIR_DOWN =  1    /**< Moves towards the bottom of the screen (alien bullet). */
+} BulletDirection;
+
+/**
+ * Configuration used to initialise a bullet.
+ * Each shooter type owns its own instance of this struct.
+ */
+typedef struct {
+    int width;               /**< Bullet width in pixels. */
+    int height;              /**< Bullet height in pixels. */
+    int speed;               /**< Pixels moved per update tick. */
+    uint32_t color;          /**< Render colour. */
+    BulletDirection direction; /**< Travel direction. */
+} BulletConfig;
+
+/**
  * Estrutura que representa uma bala.
  * Pode ser do jogador ou alienígena.
  */
@@ -16,7 +36,27 @@ typedef struct {
     int speed;                  /* Velocidade */
     uint32_t color;             /* Cor para renderização */
     bool active;                /* Se a bala está ativa */
+    BulletDirection direction;  /* Direção de movimento */
 } Bullet;
+
+/**
+ * Initialises a bullet from a configuration struct.
+ *
+ * @param bullet  Pointer to the Bullet to initialise.
+ * @param config  Configuration describing the bullet's properties and direction.
+ * @return 0 on success, -1 if either pointer is NULL.
+ */
+int bullet_init(Bullet *bullet, const BulletConfig *config);
+
+/**
+ * Advances a bullet by one tick in its travel direction.
+ * Deactivates the bullet if it leaves the screen boundaries.
+ *
+ * @param bullet        Pointer to the Bullet to update.
+ * @param screen_height Total screen height in pixels (used for the bottom boundary).
+ * @return true if the bullet is still active after the update, false otherwise.
+ */
+bool bullet_update(Bullet *bullet, int screen_height);
 
 /**
  * Inicializa a estrutura de uma bala (jogador).
@@ -25,14 +65,6 @@ typedef struct {
  * @return 0 se bem-sucedido, -1 caso contrário
  */
 int bullet_player_init(Bullet *bullet);
-
-/**
- * Inicializa a estrutura de uma bala alienígena.
- * 
- * @param bullet Pointer para a estrutura Bullet
- * @return 0 se bem-sucedido, -1 caso contrário
- */
-int bullet_alien_init(Bullet *bullet);
 
 /**
  * Atira uma bala a partir da posição do jogador.
@@ -47,33 +79,12 @@ void bullet_fire_from_player(Bullet *bullet, int player_x, int player_y,
                              int player_width, int player_height);
 
 /**
- * Atira uma bala a partir da posição de um alienigena.
- * 
- * @param bullet Pointer para a estrutura Bullet
- * @param alien_x Posição X do alienigena
- * @param alien_y Posição Y do alienigena
- * @param alien_width Largura do alienigena
- * @param alien_height Altura do alienigena
- */
-void bullet_fire_from_alien(Bullet *bullet, int alien_x, int alien_y, 
-                            int alien_width, int alien_height);
-
-/**
  * Move a bala do jogador (para cima).
  * 
  * @param bullet Pointer para a estrutura Bullet
  * @return true se a bala ainda está ativa, false se saiu da tela
  */
 bool bullet_update_player(Bullet *bullet);
-
-/**
- * Move a bala alienígena (para baixo).
- * 
- * @param bullet Pointer para a estrutura Bullet
- * @param screen_height Altura total da tela
- * @return true se a bala ainda está ativa, false se saiu da tela
- */
-bool bullet_update_alien(Bullet *bullet, int screen_height);
 
 /**
  * Desenha a bala na tela.

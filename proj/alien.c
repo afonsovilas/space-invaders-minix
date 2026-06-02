@@ -21,6 +21,29 @@
 #define ALIEN_MOVE_INTERVAL 10
 #define ALIEN_SHOOT_INTERVAL 120
 
+#define ALIEN_BULLET_WIDTH  6
+#define ALIEN_BULLET_HEIGHT 14
+#define ALIEN_BULLET_SPEED  5
+#define ALIEN_BULLET_COLOR  0x3C
+
+const BulletConfig ALIEN_BULLET_CONFIG = {
+    ALIEN_BULLET_WIDTH,
+    ALIEN_BULLET_HEIGHT,
+    ALIEN_BULLET_SPEED,
+    ALIEN_BULLET_COLOR,
+    BULLET_DIR_DOWN
+};
+
+void alien_fire_bullet(Bullet *bullet, const Alien *alien) {
+    if (bullet == NULL || alien == NULL) {
+        return;
+    }
+
+    bullet->active = true;
+    bullet->x = alien->x + alien->width  / 2 - bullet->width / 2;
+    bullet->y = alien->y + alien->height;
+}
+
 /*
   Valid range for random number of aliens.
 

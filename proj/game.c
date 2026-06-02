@@ -116,7 +116,7 @@ int game_init(Game *game, int screen_width, int screen_height) {
     }
   }
 
-  if (bullet_alien_init(&game->alien_bullet)     != 0) return -1;
+  if (bullet_init(&game->alien_bullet, &ALIEN_BULLET_CONFIG) != 0) return -1;
   if (alien_swarm_init(&game->alien_swarm)       != 0) return -1;
   if (shield_array_init(&game->shields)          != 0) return -1;
 
@@ -181,7 +181,7 @@ static void game_update_positions(Game *game) {
     }
     
     if (game->alien_bullet.active) {
-        if (!bullet_update_alien(&game->alien_bullet, game->screen_height)) {
+        if (!bullet_update(&game->alien_bullet, game->screen_height)) {
             game->alien_bullet.active = false;
         }
     }
@@ -216,11 +216,8 @@ static void game_aliens_shoot(Game *game) {
     int shooter_index;
     if (game->alien_bullet.active == false && 
         alien_swarm_get_shooter(&game->alien_swarm, &shooter_index)) {
-        bullet_fire_from_alien(&game->alien_bullet,
-                               game->alien_swarm.aliens[shooter_index].x,
-                               game->alien_swarm.aliens[shooter_index].y,
-                               game->alien_swarm.aliens[shooter_index].width,
-                               game->alien_swarm.aliens[shooter_index].height);
+        alien_fire_bullet(&game->alien_bullet,
+                          &game->alien_swarm.aliens[shooter_index]);
     }
 }
 
