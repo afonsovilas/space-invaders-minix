@@ -44,6 +44,8 @@ typedef struct {
   int score;
   int lives;
 
+  char player_name[SCOREBOARD_NAME_LEN];
+
   /** In-memory scoreboard (loaded once, updated on game-over). */
   Scoreboard scoreboard;
 

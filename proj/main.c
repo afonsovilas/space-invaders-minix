@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "game.h"
 #include "graphics.h"
@@ -131,7 +132,12 @@ int(proj_main_loop)(int argc, char *argv[]) {
       if (keyboard_has_data()) {
         uint8_t sc = keyboard_get_byte();
         keyboard_clear_data();
-        game_handle_keyboard_input(&game, sc, &running);
+      
+        if (menu_is_name_input_active(&menu)) {
+          menu_name_input_handle_key(&menu, sc);
+        } else {
+          game_handle_keyboard_input(&game, sc, &running);
+        }
       }
     }
 
@@ -201,9 +207,14 @@ int(proj_main_loop)(int argc, char *argv[]) {
       GameState state = game_get_state(&game);
 
       if (state == GAME_STATE_MENU) {
+        menu_name_input_update(&menu);
+
         /* Check if the menu produced an action */
         MenuAction action = menu_get_action(&menu);
         if (action == MENU_ACTION_PLAY) {
+          strncpy(game.player_name, menu_get_player_name(&menu),
+                  SCOREBOARD_NAME_LEN - 1);
+          game.player_name[SCOREBOARD_NAME_LEN - 1] = '\0';
           game_start(&game);
           menu_init(&menu);
         } else if (action == MENU_ACTION_SCORES) {
