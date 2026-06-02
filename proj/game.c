@@ -6,7 +6,6 @@
 #include "i8042.h"
 
 #include <stddef.h>
-#include <stdlib.h>
 #include <string.h>
 
 /* ------------------------------------------------------------------ */
@@ -65,25 +64,13 @@ static void build_hud_str(const char *prefix, int n, char *buf, int bufsize) {
   uint_to_str((unsigned int)(n < 0 ? 0 : n), buf + pi, bufsize - pi);
 }
 
-/* ------------------------------------------------------------------ */
-/* Random player names assigned automatically at game-over            */
-/* ------------------------------------------------------------------ */
-
-static const char * const RANDOM_NAMES[] = {
-  "ACE", "NOVA", "BLAZE", "GHOST", "VIPER",
-  "STORM", "HAWK", "TITAN", "ECHO", "ZERO"
-};
-#define RANDOM_NAMES_COUNT 10
-
 /**
  * Called on every game-ending condition (win or loss).
- * Saves the score under a random retro name and transitions to the
- * scoreboard screen. The scoreboard is updated in-memory immediately
- * so the new entry is visible without reloading from disk.
+ * Saves the score under the player's entered name and transitions to the
+ * scoreboard screen.
  */
 static void game_end(Game *game) {
-  const char *name = RANDOM_NAMES[rand() % RANDOM_NAMES_COUNT];
-  scoreboard_add(&game->scoreboard, name, game->score);
+  scoreboard_add(&game->scoreboard, game->player_name, game->score);
   game->state = GAME_STATE_SCOREBOARD;
 }
 
@@ -103,6 +90,8 @@ int game_init(Game *game, int screen_width, int screen_height) {
 
   game->score            = 0;
   game->lives            = MAX_LIVES;
+
+  memset(game->player_name, 0, sizeof(game->player_name));
 
   game->moving_left      = false;
   game->moving_right     = false;
@@ -465,8 +454,7 @@ void game_handle_keyboard_input(Game *game, uint8_t scancode, bool *running) {
   if (scancode == KBD_ESC_BREAK) { *running = false; return; }
 
   if (game->state == GAME_STATE_MENU) {
-    if (scancode == KBD_SPACE_MAKE) game_start(game);
-    return;
+    return;  /* keyboard shortcuts removed — menu handled by menu module */
   }
 
   if (game->state == GAME_STATE_PLAYING) {
