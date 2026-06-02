@@ -111,7 +111,7 @@ int game_init(Game *game, int screen_width, int screen_height) {
   if (player_init(&game->player) != 0) return -1;
 
   for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
-    if (bullet_player_init(&game->player_bullets[i]) != 0) {
+    if (bullet_init(&game->player_bullets[i], &PLAYER_BULLET_CONFIG) != 0) {
       return -1;
     }
   }
@@ -174,7 +174,7 @@ static void game_update_positions(Game *game) {
     
     for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
         if (game->player_bullets[i].active) {
-            if (!bullet_update_player(&game->player_bullets[i])) {
+            if (!bullet_update(&game->player_bullets[i], game->screen_height)) {
                 game->player_bullets[i].active = false;
             }
         }
@@ -388,9 +388,7 @@ void game_fire_player_bullet(Game *game) {
 
   for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
     if (!game->player_bullets[i].active) {
-      bullet_fire_from_player(&game->player_bullets[i],
-                              game->player.x, game->player.y,
-                              game->player.width, game->player.height);
+      player_fire_bullet(&game->player_bullets[i], &game->player);
       break;
     }
   }

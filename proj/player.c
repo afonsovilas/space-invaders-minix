@@ -10,6 +10,30 @@
 #define PLAYER_SPEED 5
 #define PLAYER_COLOR 0x2A
 
+/* Constantes para bala do jogador */
+#define PLAYER_BULLET_WIDTH  6
+#define PLAYER_BULLET_HEIGHT 14
+#define PLAYER_BULLET_SPEED  14
+#define PLAYER_BULLET_COLOR  0x3F
+
+const BulletConfig PLAYER_BULLET_CONFIG = {
+    PLAYER_BULLET_WIDTH,
+    PLAYER_BULLET_HEIGHT,
+    PLAYER_BULLET_SPEED,
+    PLAYER_BULLET_COLOR,
+    BULLET_DIR_UP
+};
+
+void player_fire_bullet(Bullet *bullet, const Player *player) {
+    if (bullet == NULL || player == NULL) {
+        return;
+    }
+
+    bullet->active = true;
+    bullet->x = player->x + player->width  / 2 - bullet->width / 2;
+    bullet->y = player->y - bullet->height;
+}
+
 int player_init(Player *player) {
     if (player == NULL) {
         return -1;

@@ -2,6 +2,7 @@
 #define PLAYER_H
 
 #include <stdint.h>
+#include "bullet.h"
 
 /**
  * Estrutura que representa o jogador.
@@ -65,5 +66,20 @@ void player_erase(const Player *player, uint32_t background_color);
  * @param player Pointer para a estrutura Player
  */
 void player_reset_position(Player *player);
+
+/**
+ * Bullet configuration for the player shooter.
+ * Pass to bullet_init() when creating a player bullet.
+ */
+extern const BulletConfig PLAYER_BULLET_CONFIG;
+
+/**
+ * Fires a bullet from the given player.
+ * Positions the bullet at the top-centre of the player and marks it active.
+ *
+ * @param bullet  Pointer to the Bullet to fire.
+ * @param player  The player that is shooting.
+ */
+void player_fire_bullet(Bullet *bullet, const Player *player);
 
 #endif /* PLAYER_H */
