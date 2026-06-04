@@ -22,20 +22,18 @@ SRCS= main.c          \
       scoreboard_state.c
 
 .PATH: app \
-       drivers/utils drivers/keyboard drivers/mouse drivers/timer \
-       graphics \
+       drivers/utils drivers/keyboard drivers/mouse drivers/timer drivers/graphics \
        entities/player entities/alien entities/bullet entities/shield \
        game \
-       ui/menu ui/scoreboard
+       ui/menu ui/scoreboard ui/graphics ui/graphics/sprites
 
 CPPFLAGS += -I. \
             -Iapp \
             -Idrivers -Idrivers/utils \
-            -Idrivers/keyboard -Idrivers/mouse -Idrivers/timer \
-            -Igraphics -Igraphics/sprites \
+            -Idrivers/keyboard -Idrivers/mouse -Idrivers/timer -Idrivers/graphics \
             -Ientities -Ientities/player -Ientities/alien -Ientities/bullet -Ientities/shield \
             -Igame \
-            -Iui -Iui/menu -Iui/scoreboard
+            -Iui -Iui/menu -Iui/scoreboard -Iui/graphics -Iui/graphics/sprites
 
 DPADD += ${LIBLCF}
 LDADD += -llcf
