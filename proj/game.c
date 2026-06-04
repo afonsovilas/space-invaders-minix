@@ -579,10 +579,18 @@ void game_draw(Game *game) {
   build_hud_str("WAVE ", game->wave, buf, (int) sizeof(buf));
   font_draw_string(250, 9, buf, 0x0Fu, 2);
 
-  /* Lives */
-  build_hud_str("LIVES ", game->lives, buf, (int) sizeof(buf));
-  int lw = font_string_width(buf, 2);
-  font_draw_string(game->screen_width - lw - 10, 9, buf, HUD_LIVES_COLOR, 2);
+  /* Lives (blinks when a life is lost / player is hit) */
+  if (!game->is_blinking || game->blink_show) {
+      int heart_w = 21;
+      int spacing = 5;
+      int lives_y = 8;
+      char lives_buf[10];
+      build_hud_str(": ", game->lives, lives_buf, (int) sizeof(lives_buf));
+      int text_w = font_string_width(lives_buf, 2);
+      int start_x = game->screen_width - (heart_w + spacing + text_w) - 10;
+      graphics_draw_xpm((xpm_map_t) HEART_SPRITE, (uint16_t) start_x, (uint16_t) lives_y);
+      font_draw_string(start_x + heart_w + spacing, 9, lives_buf, HUD_LIVES_COLOR, 2);
+  }
 
   /* --- Game objects --- */
   if (!game->is_blinking || game->blink_show) {
