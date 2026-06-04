@@ -44,6 +44,8 @@ typedef struct {
  */
 int alien_swarm_init(AlienSwarm *swarm);
 
+void alien_swarm_apply_difficulty(AlienSwarm *swarm, int difficulty);
+
 /**
  * Atualiza a posição de todos os alienigenas.
  * 
@@ -76,6 +78,8 @@ bool alien_swarm_reached_player(const AlienSwarm *swarm, int player_y);
  * @return true se encontrou um alienigena vivo para disparar, false caso contrário
  */
 bool alien_swarm_get_shooter(AlienSwarm *swarm, int *alien_index);
+
+bool alien_swarm_get_random_shooter_immediate(const AlienSwarm *swarm, int *alien_index);
 
 /**
  * Marca um alienigena como morto.

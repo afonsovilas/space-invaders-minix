@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 #define MAX_PLAYER_BULLETS 3
+#define MAX_ALIEN_BULLETS 8
 #define MAX_LIVES 3
 
 /**
@@ -21,11 +22,11 @@
 
 /** Game state machine. */
 typedef enum {
-  GAME_STATE_MENU,        /**< Main menu                           */
-  GAME_STATE_PLAYING,     /**< Game in progress                    */
-  GAME_STATE_PLAYER_WON,  /**< Player destroyed all aliens (transient) */
-  GAME_STATE_PLAYER_LOST, /**< Player lost all lives   (transient) */
-  GAME_STATE_SCOREBOARD   /**< Scoreboard screen                   */
+  GAME_STATE_MENU,
+  GAME_STATE_PLAYING,
+  GAME_STATE_PLAYER_WON,
+  GAME_STATE_PLAYER_LOST,
+  GAME_STATE_SCOREBOARD
 } GameState;
 
 /**
@@ -36,7 +37,7 @@ typedef struct {
 
   Player player;
   Bullet player_bullets[MAX_PLAYER_BULLETS];
-  Bullet alien_bullet;
+  Bullet alien_bullets[MAX_ALIEN_BULLETS];
 
   AlienSwarm alien_swarm;
   ShieldArray shields;
@@ -44,28 +45,25 @@ typedef struct {
   int score;
   int lives;
 
+  int wave;
+  int difficulty;
+
   char player_name[SCOREBOARD_NAME_LEN];
 
-  /** In-memory scoreboard (loaded once, updated on game-over). */
   Scoreboard scoreboard;
 
-  /* Cores */
   uint32_t background_color;
 
-  /* Dimensões da tela */
   int screen_width;
   int screen_height;
 
-  /* Flags de input */
   bool moving_left;
   bool moving_right;
 
-  /* Blinking state */
   bool is_blinking;
   int blink_timer;
   bool blink_show;
 
-  /* Mouse state */
   MouseState mouse;
 
 } Game;
@@ -76,54 +74,47 @@ int game_init(Game *game, int screen_width, int screen_height);
 /** Transition from MENU → PLAYING. */
 void game_start(Game *game);
 
-/** Update game logic one tick (collisions, movement, spawning). */
+/** Starts the next alien wave after all aliens are cleared. */
+void game_next_wave(Game *game);
+
+/** Update game logic one tick. */
 void game_update(Game *game);
 
 /** Draw all game objects + HUD into the back-buffer. */
 void game_draw(Game *game);
 
-/** Erase all game objects (draw background color). */
+/** Erase all game objects. */
 void game_erase(Game *game);
 
-/**
- * Draw a "game over" / "you win" screen.
- * Does NOT call graphics_flush() — caller must flush.
- */
+/** Draw game over screen. */
 void game_draw_game_over(const Game *game);
 
-/**
- * Draw the scoreboard screen into the back-buffer.
- * Clears the screen first. Does NOT call graphics_flush() — caller must flush.
- */
+/** Draw scoreboard screen. */
 void game_draw_scoreboard(const Game *game);
 
-/**
- * Transition from MENU → SCOREBOARD (called when the user clicks SCORES).
- * Does not save or load any score; just changes state.
- */
+/** Enter scoreboard state. */
 void game_enter_scoreboard(Game *game);
 
 /** Fires a bullet from the player if one is available. */
 void game_fire_player_bullet(Game *game);
 
-/** Process a keyboard scancode (movement, fire, ESC, menu SPACE). */
+/** Process keyboard input. */
 void game_handle_keyboard_input(Game *game, uint8_t scancode, bool *running);
 
-/**
- * Process a fully-assembled 3-byte mouse packet.
- * Updates game->mouse (position, buttons) and fires on left-click.
- * @param bytes  3-byte packet, bytes[0] is the sync byte.
- */
+/** Process mouse packet. */
 void game_handle_mouse_packet(Game *game, const uint8_t bytes[3]);
 
-/** Return the current game state. */
+/** Return current game state. */
 GameState game_get_state(const Game *game);
 
-/** Return the current score. */
+/** Return current score. */
 int game_get_score(const Game *game);
 
 /** Return remaining lives. */
 int game_get_lives(const Game *game);
+
+/** Return current wave. */
+int game_get_wave(const Game *game);
 
 /**@}*/
 

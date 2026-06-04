@@ -355,20 +355,32 @@ bool alien_swarm_get_shooter(AlienSwarm *swarm, int *alien_index) {
     }
 
     /*
-      Procura o alienigena mais baixo da coluna rotativa.
-
-      This still works with random formations because inactive slots have:
-      alive = false
+      Random shooter:
+      choose a random column, then use the lowest alive alien in that column.
     */
-    for (int attempt = 0; attempt < ALIEN_COLS; attempt++) {
-        int col = (swarm->shoot_column + attempt) % ALIEN_COLS;
+    bool tried_columns[ALIEN_COLS];
+
+    for (int col = 0; col < ALIEN_COLS; col++) {
+        tried_columns[col] = false;
+    }
+
+    int columns_tried = 0;
+
+    while (columns_tried < ALIEN_COLS) {
+        int col = random_between(0, ALIEN_COLS - 1);
+
+        if (tried_columns[col]) {
+            continue;
+        }
+
+        tried_columns[col] = true;
+        columns_tried++;
 
         for (int row = ALIEN_ROWS - 1; row >= 0; row--) {
             int i = row * ALIEN_COLS + col;
 
             if (swarm->aliens[i].alive) {
                 *alien_index = i;
-                swarm->shoot_column = (col + 1) % ALIEN_COLS;
                 swarm->shoot_counter = 0;
                 return true;
             }
@@ -376,6 +388,48 @@ bool alien_swarm_get_shooter(AlienSwarm *swarm, int *alien_index) {
     }
 
     swarm->shoot_counter = 0;
+    return false;
+}
+
+bool alien_swarm_get_random_shooter_immediate(const AlienSwarm *swarm, int *alien_index) {
+    if (swarm == NULL || alien_index == NULL) {
+        return false;
+    }
+
+    /*
+      Choose a random column.
+      In that column, pick the lowest alive alien.
+      Does NOT use shoot_counter.
+      This is for extra simultaneous shots.
+    */
+    bool tried_columns[ALIEN_COLS];
+
+    for (int col = 0; col < ALIEN_COLS; col++) {
+        tried_columns[col] = false;
+    }
+
+    int columns_tried = 0;
+
+    while (columns_tried < ALIEN_COLS) {
+        int col = random_between(0, ALIEN_COLS - 1);
+
+        if (tried_columns[col]) {
+            continue;
+        }
+
+        tried_columns[col] = true;
+        columns_tried++;
+
+        for (int row = ALIEN_ROWS - 1; row >= 0; row--) {
+            int i = row * ALIEN_COLS + col;
+
+            if (swarm->aliens[i].alive) {
+                *alien_index = i;
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 
@@ -414,3 +468,87 @@ void alien_swarm_erase(const AlienSwarm *swarm, uint32_t background_color) {
         }
     }
 }
+
+void alien_swarm_apply_difficulty(AlienSwarm *swarm, int difficulty) {
+    if (swarm == NULL) {
+        return;
+    }
+
+    if (difficulty < 1) {
+        difficulty = 1;
+    }
+
+    /*
+      Stronger difficulty curve.
+
+      Wave 1:
+        normal speed
+        normal shooting
+
+      Wave 2:
+        noticeably faster movement
+        much faster shooting
+
+      Wave 3+:
+        gets dangerous quickly
+    */
+
+    /*
+      Movement interval:
+      Lower = aliens move more often.
+      Starts at 10.
+      Wave 1: 10
+      Wave 2: 7
+      Wave 3: 5
+      Wave 4+: minimum 3
+    */
+    swarm->move_interval = ALIEN_MOVE_INTERVAL - (difficulty - 1) * 3;
+
+    if (swarm->move_interval < 3) {
+        swarm->move_interval = 3;
+    }
+
+    /*
+      Shoot interval:
+      Lower = aliens shoot more often.
+      Starts at 120.
+      Wave 1: 120
+      Wave 2: 80
+      Wave 3: 40
+      Wave 4+: minimum 18
+    */
+    swarm->shoot_interval = ALIEN_SHOOT_INTERVAL - (difficulty - 1) * 40;
+
+    if (swarm->shoot_interval < 18) {
+        swarm->shoot_interval = 18;
+    }
+
+    /*
+      Alien horizontal speed:
+      Wave 1: 2
+      Wave 2: 4
+      Wave 3: 6
+      Wave 4: 8
+      capped at 14
+    */
+    swarm->speed = ALIEN_SPEED + (difficulty - 1) * 2;
+
+    if (swarm->speed > 14) {
+        swarm->speed = 14;
+    }
+
+    /*
+      Alien drop:
+      Wave 1: 20
+      Wave 2: 30
+      Wave 3: 40
+      Wave 4: 50
+      capped at 80
+    */
+    swarm->drop = ALIEN_DROP + (difficulty - 1) * 10;
+
+    if (swarm->drop > 80) {
+        swarm->drop = 80;
+    }
+}
+

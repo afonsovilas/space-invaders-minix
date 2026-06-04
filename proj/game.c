@@ -64,6 +64,55 @@ static void build_hud_str(const char *prefix, int n, char *buf, int bufsize) {
   uint_to_str((unsigned int)(n < 0 ? 0 : n), buf + pi, bufsize - pi);
 }
 
+static int game_max_active_alien_bullets(const Game *game) {
+    if (game == NULL) {
+        return 1;
+    }
+
+    /*
+      Much faster bullet count scaling:
+      Wave 1: 1 alien bullet
+      Wave 2: 2 alien bullets
+      Wave 3: 3 alien bullets
+      Wave 4: 4 alien bullets
+      ...
+      capped at MAX_ALIEN_BULLETS.
+    */
+    int max_bullets = game->wave;
+
+    if (max_bullets < 1) {
+        max_bullets = 1;
+    }
+
+    if (max_bullets > MAX_ALIEN_BULLETS) {
+        max_bullets = MAX_ALIEN_BULLETS;
+    }
+
+    return max_bullets;
+}
+
+static int game_alien_bullet_speed_for_wave(const Game *game) {
+    if (game == NULL) {
+        return ALIEN_BULLET_CONFIG.speed;
+    }
+
+    /*
+      Faster bullet speed scaling:
+      Wave 1: base speed
+      Wave 2: +2
+      Wave 3: +4
+      Wave 4: +6
+      etc.
+    */
+    int speed = ALIEN_BULLET_CONFIG.speed + (game->wave - 1) * 2;
+
+    if (speed > 18) {
+        speed = 18;
+    }
+
+    return speed;
+}
+
 /**
  * Called on every game-ending condition (win or loss).
  * Saves the score under the player's entered name and transitions to the
@@ -91,6 +140,9 @@ int game_init(Game *game, int screen_width, int screen_height) {
   game->score            = 0;
   game->lives            = MAX_LIVES;
 
+  game->wave             = 1;
+  game->difficulty       = 1;
+
   memset(game->player_name, 0, sizeof(game->player_name));
 
   game->moving_left      = false;
@@ -116,8 +168,13 @@ int game_init(Game *game, int screen_width, int screen_height) {
     }
   }
 
-  if (bullet_init(&game->alien_bullet, &ALIEN_BULLET_CONFIG) != 0) return -1;
+  for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
+    if (bullet_init(&game->alien_bullets[i], &ALIEN_BULLET_CONFIG) != 0) {
+        return -1;
+    }
+}
   if (alien_swarm_init(&game->alien_swarm)       != 0) return -1;
+  alien_swarm_apply_difficulty(&game->alien_swarm, game->difficulty);
   if (shield_array_init(&game->shields)          != 0) return -1;
 
   scoreboard_load(&game->scoreboard);
@@ -129,6 +186,51 @@ void game_start(Game *game) {
   if (game == NULL || game->state != GAME_STATE_MENU) return;
   game->state = GAME_STATE_PLAYING;
 }
+
+void game_next_wave(Game *game) {
+    if (game == NULL) {
+        return;
+    }
+
+    game->wave++;
+    game->difficulty++;
+
+    /*
+      Clear all player bullets.
+    */
+    for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
+        game->player_bullets[i].active = false;
+    }
+
+    /*
+      Clear all alien bullets.
+    */
+    for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
+        game->alien_bullets[i].active = false;
+        game->alien_bullets[i].speed = game_alien_bullet_speed_for_wave(game);
+    }
+
+    player_reset_position(&game->player);
+
+    game->moving_left = false;
+    game->moving_right = false;
+
+    game->is_blinking = false;
+    game->blink_timer = 0;
+    game->blink_show = true;
+
+    /*
+      New random alien formation.
+    */
+    alien_swarm_init(&game->alien_swarm);
+
+    /*
+      Apply stronger wave difficulty.
+    */
+    alien_swarm_apply_difficulty(&game->alien_swarm, game->difficulty);
+}
+
+
 
 /* --- Funções Auxiliares de Atualização de Frame (SRP) --- */
 
@@ -148,30 +250,31 @@ static void game_update_blinking(Game *game) {
 
 static void game_erase_entities(Game *game) {
     player_erase(&game->player, game->background_color);
-    
+
     for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
         if (game->player_bullets[i].active) {
             bullet_erase(&game->player_bullets[i], game->background_color);
         }
     }
-    
-    if (game->alien_bullet.active) {
-        bullet_erase(&game->alien_bullet, game->background_color);
+
+    for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
+        if (game->alien_bullets[i].active) {
+            bullet_erase(&game->alien_bullets[i], game->background_color);
+        }
     }
-    
+
     alien_swarm_erase(&game->alien_swarm, game->background_color);
 }
 
 static void game_update_positions(Game *game) {
-    
     if (game->moving_left) {
         player_move_left(&game->player, game->screen_width);
     }
-    
+
     if (game->moving_right) {
         player_move_right(&game->player, game->screen_width);
     }
-    
+
     for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
         if (game->player_bullets[i].active) {
             if (!bullet_update(&game->player_bullets[i], game->screen_height)) {
@@ -179,45 +282,133 @@ static void game_update_positions(Game *game) {
             }
         }
     }
-    
-    if (game->alien_bullet.active) {
-        if (!bullet_update(&game->alien_bullet, game->screen_height)) {
-            game->alien_bullet.active = false;
+
+    for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
+        if (game->alien_bullets[i].active) {
+            if (!bullet_update(&game->alien_bullets[i], game->screen_height)) {
+                game->alien_bullets[i].active = false;
+            }
         }
     }
 }
 
 static void game_check_player_hit(Game *game) {
-    if (game->alien_bullet.active) {
-        if (check_collision(game->alien_bullet.x, game->alien_bullet.y,
-                           game->alien_bullet.width, game->alien_bullet.height,
-                           game->player.x, game->player.y,
-                           game->player.width, game->player.height)) {
-            if (!game->is_blinking) {
-                game->lives--;
-                game->alien_bullet.active = false;
-                
-                if (game->lives <= 0) {
-                    game_end(game);
-                    return;
+    for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
+        if (game->alien_bullets[i].active) {
+            if (check_collision(game->alien_bullets[i].x, game->alien_bullets[i].y,
+                                game->alien_bullets[i].width, game->alien_bullets[i].height,
+                                game->player.x, game->player.y,
+                                game->player.width, game->player.height)) {
+
+                game->alien_bullets[i].active = false;
+
+                if (!game->is_blinking) {
+                    game->lives--;
+
+                    if (game->lives <= 0) {
+                        game_end(game);
+                        return;
+                    }
+
+                    game->is_blinking = true;
+                    game->blink_timer = BLINK_DURATION;
+                    game->blink_show = false;
                 }
-                
-                game->is_blinking = true;
-                game->blink_timer = BLINK_DURATION;
-                game->blink_show = false;
-            } else {
-                game->alien_bullet.active = false;
             }
         }
     }
 }
 
 static void game_aliens_shoot(Game *game) {
-    int shooter_index;
-    if (game->alien_bullet.active == false && 
-        alien_swarm_get_shooter(&game->alien_swarm, &shooter_index)) {
-        alien_fire_bullet(&game->alien_bullet,
-                          &game->alien_swarm.aliens[shooter_index]);
+    if (game == NULL) {
+        return;
+    }
+
+    int max_bullets = game_max_active_alien_bullets(game);
+
+    /*
+      Count active alien bullets.
+    */
+    int active_bullets = 0;
+
+    for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
+        if (game->alien_bullets[i].active) {
+            active_bullets++;
+        }
+    }
+
+    if (active_bullets >= max_bullets) {
+        return;
+    }
+
+    /*
+      First shooter uses the normal shoot timer.
+      If the timer says no shot yet, nobody shoots this frame.
+    */
+    int first_shooter_index;
+
+    if (!alien_swarm_get_shooter(&game->alien_swarm, &first_shooter_index)) {
+        return;
+    }
+
+    /*
+      Number of bullets fired at the same time.
+      Make this aggressive:
+      Wave 1: 1 shot
+      Wave 2: 2 shots
+      Wave 3: 3 shots
+      Wave 4+: 4 shots
+    */
+    int bullets_to_fire = game->wave;
+
+    if (bullets_to_fire < 1) {
+        bullets_to_fire = 1;
+    }
+
+    if (bullets_to_fire > 4) {
+        bullets_to_fire = 4;
+    }
+
+    /*
+      Fire the first timed shot.
+    */
+    for (int i = 0; i < max_bullets; i++) {
+        if (!game->alien_bullets[i].active) {
+            game->alien_bullets[i].speed = game_alien_bullet_speed_for_wave(game);
+
+            alien_fire_bullet(&game->alien_bullets[i],
+                              &game->alien_swarm.aliens[first_shooter_index]);
+
+            active_bullets++;
+            break;
+        }
+    }
+
+    /*
+      Fire extra simultaneous shots without waiting for shoot_counter again.
+    */
+    for (int shot = 1; shot < bullets_to_fire; shot++) {
+        if (active_bullets >= max_bullets) {
+            return;
+        }
+
+        int shooter_index;
+
+        if (!alien_swarm_get_random_shooter_immediate(&game->alien_swarm, &shooter_index)) {
+            return;
+        }
+
+        for (int i = 0; i < max_bullets; i++) {
+            if (!game->alien_bullets[i].active) {
+                game->alien_bullets[i].speed = game_alien_bullet_speed_for_wave(game);
+
+                alien_fire_bullet(&game->alien_bullets[i],
+                                  &game->alien_swarm.aliens[shooter_index]);
+
+                active_bullets++;
+                break;
+            }
+        }
     }
 }
 
@@ -227,9 +418,9 @@ static void game_check_player_bullet_shield_collision(Game *game) {
             for (int i = 0; i < SHIELD_COUNT; i++) {
                 if (game->shields.shields[i].alive) {
                     if (check_collision(game->player_bullets[b].x, game->player_bullets[b].y,
-                                       game->player_bullets[b].width, game->player_bullets[b].height,
-                                       game->shields.shields[i].x, game->shields.shields[i].y,
-                                       game->shields.shields[i].width, game->shields.shields[i].height)) {
+                                        game->player_bullets[b].width, game->player_bullets[b].height,
+                                        game->shields.shields[i].x, game->shields.shields[i].y,
+                                        game->shields.shields[i].width, game->shields.shields[i].height)) {
                         shield_erase(&game->shields, i, game->background_color);
                         shield_destroy(&game->shields, i);
                         game->player_bullets[b].active = false;
@@ -242,22 +433,25 @@ static void game_check_player_bullet_shield_collision(Game *game) {
 }
 
 static void game_check_alien_bullet_shield_collision(Game *game) {
-    if (game->alien_bullet.active) {
-        for (int i = 0; i < SHIELD_COUNT; i++) {
-            if (game->shields.shields[i].alive) {
-                if (check_collision(game->alien_bullet.x, game->alien_bullet.y,
-                                   game->alien_bullet.width, game->alien_bullet.height,
-                                   game->shields.shields[i].x, game->shields.shields[i].y,
-                                   game->shields.shields[i].width, game->shields.shields[i].height)) {
-                    shield_erase(&game->shields, i, game->background_color);
-                    shield_destroy(&game->shields, i);
-                    game->alien_bullet.active = false;
-                    break;
+    for (int b = 0; b < MAX_ALIEN_BULLETS; b++) {
+        if (game->alien_bullets[b].active) {
+            for (int i = 0; i < SHIELD_COUNT; i++) {
+                if (game->shields.shields[i].alive) {
+                    if (check_collision(game->alien_bullets[b].x, game->alien_bullets[b].y,
+                                        game->alien_bullets[b].width, game->alien_bullets[b].height,
+                                        game->shields.shields[i].x, game->shields.shields[i].y,
+                                        game->shields.shields[i].width, game->shields.shields[i].height)) {
+                        shield_erase(&game->shields, i, game->background_color);
+                        shield_destroy(&game->shields, i);
+                        game->alien_bullets[b].active = false;
+                        break;
+                    }
                 }
             }
         }
     }
 }
+
 
 static void game_check_player_bullet_alien_collision(Game *game) {
     for (int b = 0; b < MAX_PLAYER_BULLETS; b++) {
@@ -273,7 +467,7 @@ static void game_check_player_bullet_alien_collision(Game *game) {
                         game->score += 100;
                         
                         if (alien_swarm_all_dead(&game->alien_swarm)) {
-                            game_end(game);
+                            game_next_wave(game);
                             return;
                         }
                         
@@ -333,6 +527,9 @@ void game_draw(Game *game) {
   build_hud_str("SCORE ", game->score, buf, (int) sizeof(buf));
   font_draw_string(10, 9, buf, HUD_SCORE_COLOR, 2);
 
+  build_hud_str("WAVE ", game->wave, buf, (int) sizeof(buf));
+  font_draw_string(250, 9, buf, 0x0Fu, 2);
+
   /* Lives */
   build_hud_str("LIVES ", game->lives, buf, (int) sizeof(buf));
   int lw = font_string_width(buf, 2);
@@ -349,8 +546,10 @@ void game_draw(Game *game) {
     }
   }
 
-  if (game->alien_bullet.active) {
-    bullet_draw(&game->alien_bullet);
+  for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
+      if (game->alien_bullets[i].active) {
+          bullet_draw(&game->alien_bullets[i]);
+      }
   }
 
   alien_swarm_draw(&game->alien_swarm);
@@ -368,9 +567,11 @@ void game_erase(Game *game) {
     }
   }
 
-  if (game->alien_bullet.active) {
-    bullet_erase(&game->alien_bullet, game->background_color);
-  }
+  for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
+    if (game->alien_bullets[i].active) {
+        bullet_erase(&game->alien_bullets[i], game->background_color);
+    }
+}
 
   alien_swarm_erase(&game->alien_swarm, game->background_color);
 
@@ -511,4 +712,9 @@ int game_get_score(const Game *game) {
 int game_get_lives(const Game *game) {
   if (game == NULL) return 0;
   return game->lives;
+}
+
+int game_get_wave(const Game *game) {
+  if (game == NULL) return 0;
+  return game->wave;
 }
