@@ -45,6 +45,10 @@
 #define KBD_N_MAKE  0x31
 #define KBD_M_MAKE  0x32
 
+/* ---- Scancode → uppercase letter (make-codes 0x00–0x7F)  ---- */
+/* '\0' means the key does not map to a letter.                   */
+extern const char kbd_scancode_to_char[128];
+
 int keyboard_subscribe_int(uint8_t *bit_no);
 int keyboard_unsubscribe_int(void);
 void keyboard_ih(void);
