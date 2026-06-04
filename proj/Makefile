@@ -1,20 +1,22 @@
 PROG=proj
 
-SRCS= main.c      \
-      graphics.c  \
-      keyboard.c  \
-      timer.c     \
-      mouse.c     \
-      font.c      \
-      menu.c      \
-      player.c    \
-      alien.c     \
-      bullet.c    \
-      shield.c    \
-      game.c      \
+SRCS= main.c        \
+      keyboard.c    \
+      mouse.c       \
+      timer.c       \
+      graphics.c    \
+      font.c        \
+      player.c      \
+      alien.c       \
+      bullet.c      \
+      shield.c      \
+      game.c        \
+      menu.c        \
       scoreboard.c
 
-CPPFLAGS += -Iinclude
+.PATH: drivers graphics entities game ui
+
+CPPFLAGS += -I. -Idrivers -Igraphics -Ientities -Igame -Iui
 
 DPADD += ${LIBLCF}
 LDADD += -llcf
