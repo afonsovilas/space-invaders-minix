@@ -38,6 +38,14 @@ void font_draw_string(int x, int y, const char *str, uint32_t color, int scale);
  */
 int font_string_width(const char *str, int scale);
 
+/**
+ * Draw a null-terminated string horizontally centred on pixel column cx.
+ * Equivalent to:
+ *   font_draw_string(cx - font_string_width(str,scale)/2, y, str, color, scale)
+ */
+void font_draw_string_centred(int cx, int y, const char *str,
+                               uint32_t color, int scale);
+
 /**@}*/
 
 #endif /* FONT_H */

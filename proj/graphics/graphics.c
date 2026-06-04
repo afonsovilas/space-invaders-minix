@@ -178,3 +178,27 @@ uint16_t graphics_get_hres(void)           { return hres; }
 uint16_t graphics_get_vres(void)           { return vres; }
 unsigned graphics_get_bytes_per_line(void) { return bytes_per_line; }
 unsigned graphics_get_bytes_per_pixel(void){ return bytes_per_pixel; }
+
+void graphics_draw_crosshair(int cx, int cy) {
+  /* Horizontal arms — clamp to screen edges */
+  int lx = cx - 10;
+  int rx = cx + 4;
+  if (lx < 0) lx = 0;
+  if (rx + 6 >= (int) hres) rx = (int) hres - 7;
+
+  graphics_draw_hline((uint16_t) lx,      (uint16_t) cy,
+                      (uint16_t)(cx - 3 - lx),  0x0Fu);
+  graphics_draw_hline((uint16_t)(cx + 4), (uint16_t) cy,
+                      (uint16_t)(rx - cx - 3),  0x0Fu);
+
+  /* Vertical arms */
+  for (int dy = -10; dy <= 10; dy++) {
+    if (dy >= -2 && dy <= 2) continue;
+    int py = cy + dy;
+    if (py >= 0 && py < (int) vres)
+      graphics_draw_pixel((uint16_t) cx, (uint16_t) py, 0x0Fu);
+  }
+
+  /* Centre dot */
+  graphics_draw_rectangle((uint16_t)(cx - 1), (uint16_t)(cy - 1), 3, 3, 0x0Cu);
+}

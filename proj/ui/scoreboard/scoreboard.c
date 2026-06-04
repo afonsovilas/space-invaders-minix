@@ -191,12 +191,10 @@ void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h) {
      * 1.  Title  "SCOREBOARD"                                             *
      * ------------------------------------------------------------------ */
     {
-        const char *title  = "SCOREBOARD";
-        const int   sc     = 3;
-        int tw = font_string_width(title, sc);
-        int tx = (screen_w - tw) / 2;
-        font_draw_string(tx, cur_y, title, COLOR_TITLE, sc);
-        cur_y += FONT_GLYPH_H * sc + ROW_PAD * 2;
+    const char *title  = "SCOREBOARD";
+    const int   sc     = 3;
+    font_draw_string_centred(screen_w / 2, cur_y, title, COLOR_TITLE, sc);
+    cur_y += FONT_GLYPH_H * sc + ROW_PAD * 2;
     }
 
     /* ------------------------------------------------------------------ *
@@ -219,9 +217,7 @@ void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h) {
     {
         const char *hdr = "#   NAME             SCORE";
         const int   sc  = 1;
-        int hw = font_string_width(hdr, sc);
-        int hx = (screen_w - hw) / 2;
-        font_draw_string(hx, cur_y, hdr, COLOR_HEADER, sc);
+        font_draw_string_centred(screen_w / 2, cur_y, hdr, COLOR_HEADER, sc);
         cur_y += FONT_GLYPH_H * sc + ROW_PAD;
 
         /* thin separator under headers */
@@ -254,10 +250,7 @@ void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h) {
         snprintf(buf, sizeof(buf), "#%-2d %-20s %d", i + 1, e->name, e->score);
 
         /* Centre the text horizontally                                     */
-        int tw = font_string_width(buf, sc);
-        int tx = (screen_w - tw) / 2;
-
-        font_draw_string(tx, cur_y, buf, col, sc);
+        font_draw_string_centred(screen_w / 2, cur_y, buf, col, sc);
 
         /* Advance y by this row's rendered height plus padding            */
         cur_y += FONT_GLYPH_H * sc + ROW_PAD * sc;
@@ -272,9 +265,7 @@ void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h) {
     if (display_count == 0) {
         const char *empty = "NO SCORES YET";
         const int   sc    = 2;
-        int tw = font_string_width(empty, sc);
-        int tx = (screen_w - tw) / 2;
-        font_draw_string(tx, cur_y, empty, COLOR_NORMAL, sc);
+        font_draw_string_centred(screen_w / 2, cur_y, empty, COLOR_NORMAL, sc);
     }
 
     /* ------------------------------------------------------------------ *
@@ -283,9 +274,7 @@ void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h) {
     {
         const char *footer = "PRESS SPACE TO RETURN TO MENU";
         const int   sc     = 2;
-        int fw = font_string_width(footer, sc);
-        int fx = (screen_w - fw) / 2;
         int fy = screen_h - FONT_GLYPH_H * sc - 20;
-        font_draw_string(fx, fy, footer, COLOR_TITLE, sc);
+        font_draw_string_centred(screen_w / 2, fy, footer, COLOR_TITLE, sc);
     }
 }
