@@ -1,9 +1,13 @@
 #ifndef SHIELD_SPRITES_H
 #define SHIELD_SPRITES_H
 
-/* ---------------------------------------------------------------------
- * SHIELD_SPRITE     90 x 30 pixels, 2 colors
- * ------------------------------------------------------------------- */
+/**
+ * @defgroup shield_sprites Shield Sprites
+ * XPM sprite data for defensive shields.
+ * @{
+ */
+
+/** Shield sprite (90×30 px, 2 colors). */
 static const char * const SHIELD_SPRITE[] = {
     "90 30 2",
     "  0",
@@ -39,5 +43,7 @@ static const char * const SHIELD_SPRITE[] = {
     " XXXXXXXXXXXXXX                                                            XXXXXXXXXXXXXX ", /* row 28 */
     " XXXXXXXXXXXXX                                                              XXXXXXXXXXXXX ", /* row 29 */
 };
+
+/** @} */
 
 #endif /* SHIELD_SPRITES_H */

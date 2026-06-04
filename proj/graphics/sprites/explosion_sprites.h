@@ -1,9 +1,14 @@
 #ifndef EXPLOSION_SPRITES_H
 #define EXPLOSION_SPRITES_H
 
-/* ---------------------------------------------------------------------
- * EXPLOSION_SPRITE_1  -  40 x 25 pixels, 3 colors
- * ------------------------------------------------------------------- */
+/**
+ * @defgroup explosion_sprites Explosion Sprites
+ * XPM sprite animation frames for explosions.
+ * Four frames in sequence for smooth explosion animation.
+ * @{
+ */
+
+/** Explosion frame 1 (40×25 px, 3 colors). */
 static const char * const EXPLOSION_SPRITE_1[] = {
     "40 25 3",
     "  0",
@@ -36,6 +41,7 @@ static const char * const EXPLOSION_SPRITE_1[] = {
     "                                        ", /* row 24 */
 };
 
+/** Explosion frame 2 (40×25 px, 3 colors). */
 static const char * const EXPLOSION_SPRITE_2[] = {
     "40 25 3",
     "  0",
@@ -68,6 +74,7 @@ static const char * const EXPLOSION_SPRITE_2[] = {
     "                          X             ", /* row 24 */
 };
 
+/** Explosion frame 3 (40×25 px, 3 colors). */
 static const char * const EXPLOSION_SPRITE_3[] = {
     "40 25 3",
     "  0",
@@ -100,6 +107,7 @@ static const char * const EXPLOSION_SPRITE_3[] = {
     "X         X   OXX  XO XX  O O O   X     ", /* row 24 */
 };
 
+/** Explosion frame 4 (40×25 px, 3 colors). */
 static const char * const EXPLOSION_SPRITE_4[] = {
     "40 25 3",
     "  0",
@@ -132,6 +140,7 @@ static const char * const EXPLOSION_SPRITE_4[] = {
     "   X         X      X        X         X", /* row 24 */
 };
 
+/** Array of all four explosion animation frames. */
 static const char * const * const EXPLOSION_SPRITES[] = {
     EXPLOSION_SPRITE_1,
     EXPLOSION_SPRITE_2,
@@ -139,6 +148,7 @@ static const char * const * const EXPLOSION_SPRITES[] = {
     EXPLOSION_SPRITE_4
 };
 
+/** Shield explosion frame 1 (90×30 px, 3 colors). */
 static const char * const SHIELD_EXPLOSION_SPRITE_1[] = {
     "90 30 3",
     "  0",
@@ -176,6 +186,7 @@ static const char * const SHIELD_EXPLOSION_SPRITE_1[] = {
     "                                                                                          ", /* row 29 */
 };
 
+/** Shield explosion frame 2 (90×30 px, 3 colors). */
 static const char * const SHIELD_EXPLOSION_SPRITE_2[] = {
     "90 30 3",
     "  0",
@@ -213,6 +224,7 @@ static const char * const SHIELD_EXPLOSION_SPRITE_2[] = {
     "                           X       X            XX    X  X              X                 ", /* row 29 */
 };
 
+/** Shield explosion frame 3 (90×30 px, 3 colors). */
 static const char * const SHIELD_EXPLOSION_SPRITE_3[] = {
     "90 30 3",
     "  0",
@@ -250,6 +262,7 @@ static const char * const SHIELD_EXPLOSION_SPRITE_3[] = {
     "  X O                  XOX  X    OO     OO           X O    O O    X          X   X  XO   ", /* row 29 */
 };
 
+/** Shield explosion frame 4 (90×30 px, 3 colors). */
 static const char * const SHIELD_EXPLOSION_SPRITE_4[] = {
     "90 30 3",
     "  0",
@@ -287,11 +300,14 @@ static const char * const SHIELD_EXPLOSION_SPRITE_4[] = {
     "X                                          X  O         O                                 ", /* row 29 */
 };
 
+/** Array of all four shield explosion animation frames. */
 static const char * const * const SHIELD_EXPLOSION_SPRITES[] = {
     SHIELD_EXPLOSION_SPRITE_1,
     SHIELD_EXPLOSION_SPRITE_2,
     SHIELD_EXPLOSION_SPRITE_3,
     SHIELD_EXPLOSION_SPRITE_4
 };
+
+/** @} */
 
 #endif /* EXPLOSION_SPRITES_H */

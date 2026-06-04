@@ -1,9 +1,13 @@
 #ifndef PLAYER_SPRITES_H
 #define PLAYER_SPRITES_H
 
-/* ---------------------------------------------------------------------
- * PLAYER_SPRITE  -  60 x 30 pixels, 3 colors
- * ------------------------------------------------------------------- */
+/**
+ * @defgroup player_sprites Player Sprites
+ * XPM sprite data for the player spaceship.
+ * @{
+ */
+
+/** Player sprite (60×30 px, 3 colors). */
 static const char * const PLAYER_SPRITE[] = {
     "60 30 3",
     "  0",
@@ -40,5 +44,7 @@ static const char * const PLAYER_SPRITE[] = {
     "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG", /* row 28 */
     "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG", /* row 29 */
 };
+
+/** @} */
 
 #endif /* PLAYER_SPRITES_H */
