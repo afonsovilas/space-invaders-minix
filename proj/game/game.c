@@ -5,7 +5,6 @@
 #include "keyboard.h"
 #include "font.h"
 #include "scoreboard.h"
-#include "i8042.h"
 
 #include <stddef.h>
 #include <string.h>
@@ -551,7 +550,7 @@ void game_update(Game *game) {
         return;
     }
     
-    alien_swarm_update(&game->alien_swarm);
+    alien_swarm_update(&game->alien_swarm, game->screen_width);
     
     if (alien_swarm_reached_player(&game->alien_swarm, game->player.y)) {
         game_end(game);
@@ -631,40 +630,6 @@ void game_draw(Game *game) {
   }
 }
 
-void game_erase(Game *game) {
-  if (game == NULL) return;
-
-  player_erase(&game->player, game->background_color);
-
-  for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
-    if (game->player_bullets[i].active) {
-      bullet_erase(&game->player_bullets[i], game->background_color);
-    }
-  }
-
-  for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
-    if (game->alien_bullets[i].active) {
-        bullet_erase(&game->alien_bullets[i], game->background_color);
-    }
-}
-
-  alien_swarm_erase(&game->alien_swarm, game->background_color);
-
-  for (int i = 0; i < SHIELD_COUNT; i++) {
-    if (game->shields.shields[i].alive) {
-      shield_erase(&game->shields, i, game->background_color);
-    }
-  }
-
-  for (int i = 0; i < MAX_EXPLOSIONS; i++) {
-    if (game->explosions[i].active) {
-      graphics_draw_rectangle(game->explosions[i].x, game->explosions[i].y,
-                              game->explosions[i].width, game->explosions[i].height,
-                              game->background_color);
-    }
-  }
-}
-
 void game_fire_player_bullet(Game *game) {
   if (game == NULL || game->state != GAME_STATE_PLAYING) {
     return;
@@ -676,45 +641,6 @@ void game_fire_player_bullet(Game *game) {
       break;
     }
   }
-}
-
-void game_draw_game_over(const Game *game) {
-  if (game == NULL) return;
-
-  bool won = (game->state == GAME_STATE_PLAYER_WON);
-
-  /* Translucent overlay – fill with dark bg */
-  graphics_clear(0x00u);
-
-  /* Draw some stars for atmosphere */
-  static const uint16_t GSTARS[][2] = {
-    {50,40},{200,80},{400,30},{700,60},{900,20},{100,200},
-    {350,150},{600,180},{850,130},{200,350},{500,300},{800,370},
-    {150,500},{450,480},{750,520},{50,650},{900,680},{300,600},
-  };
-  for (int i = 0; i < 18; i++)
-    graphics_draw_pixel(GSTARS[i][0], GSTARS[i][1], 0x0Fu);
-
-  /* Screen border */
-  graphics_draw_hline(0, 0, 1024, 0x0Bu);
-  graphics_draw_hline(0, 1, 1024, 0x0Bu);
-
-  /* Title */
-  const char *title = won ? "YOU WIN" : "GAME OVER";
-  uint32_t   tcol   = won ? 0x0Au    : 0x0Cu;   /* green : red */
-  int tw = font_string_width(title, 5);
-  font_draw_string(512 - tw / 2, 220, title, tcol, 5);
-
-  /* Score */
-  char sbuf[24];
-  build_hud_str("FINAL SCORE ", game->score, sbuf, (int) sizeof(sbuf));
-  int sw = font_string_width(sbuf, 3);
-  font_draw_string(512 - sw / 2, 380, sbuf, 0x0Eu, 3);
-
-  /* Exit hint */
-  const char *hint = "PRESS ESC TO EXIT";
-  int hw = font_string_width(hint, 2);
-  font_draw_string(512 - hw / 2, 520, hint, 0x07u, 2);
 }
 
 void game_handle_keyboard_input(Game *game, uint8_t scancode, bool *running) {
@@ -754,32 +680,6 @@ void game_draw_scoreboard(const Game *game) {
 void game_enter_scoreboard(Game *game) {
   if (game == NULL) return;
   game->state = GAME_STATE_SCOREBOARD;
-}
-
-void game_handle_mouse_packet(Game *game, const uint8_t bytes[3]) {
-  if (game == NULL || bytes == NULL) return;
-
-  /* Skip overflow packets */
-  if (bytes[0] & (MOUSE_X_OV | MOUSE_Y_OV)) return;
-
-  /* Update button state */
-  game->mouse.lb = (bytes[0] & MOUSE_LB) != 0;
-  game->mouse.rb = (bytes[0] & MOUSE_RB) != 0;
-  game->mouse.mb = (bytes[0] & MOUSE_MB) != 0;
-
-  /* Compute signed deltas (sign-extend from 9-bit two's complement) */
-  int16_t dx = (bytes[0] & MOUSE_X_SIGN) ? (int16_t)(0xFF00u | bytes[1]) : (int16_t)bytes[1];
-  int16_t dy = (bytes[0] & MOUSE_Y_SIGN) ? (int16_t)(0xFF00u | bytes[2]) : (int16_t)bytes[2];
-
-  /* Y is inverted: mouse moves up → screen Y decreases */
-  game->mouse.x += dx;
-  game->mouse.y -= dy;
-
-  /* Clamp to screen */
-  if (game->mouse.x < 0)                         game->mouse.x = 0;
-  if (game->mouse.y < 0)                         game->mouse.y = 0;
-  if (game->mouse.x >= game->screen_width)       game->mouse.x = game->screen_width  - 1;
-  if (game->mouse.y >= game->screen_height)      game->mouse.y = game->screen_height - 1;
 }
 
 GameState game_get_state(const Game *game) {

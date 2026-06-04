@@ -29,7 +29,7 @@ static void draw_crosshair(int cx, int cy) {
   for (int dy = -10; dy <= 10; dy++) {
     if (dy >= -2 && dy <= 2) continue;
     int py = cy + dy;
-    if (py >= 0 && py < 768)
+    if (py >= 0 && py < (int)graphics_get_vres())
       graphics_draw_pixel((uint16_t) cx, (uint16_t) py, 0x0Fu);
   }
 
@@ -61,7 +61,7 @@ int(proj_main_loop)(int argc, char *argv[]) {
 
   /* ---- Initialise game state ---- */
   Game game;
-  if (game_init(&game, 1024, 768) != 0) {
+  if (game_init(&game, (int)graphics_get_hres(), (int)graphics_get_vres()) != 0) {
     printf("game_init failed\n");
     vg_exit();
     return 1;
@@ -176,8 +176,8 @@ int(proj_main_loop)(int argc, char *argv[]) {
               cursor_y -= dy;
               if (cursor_x < 0)    cursor_x = 0;
               if (cursor_y < 0)    cursor_y = 0;
-              if (cursor_x >= 1024) cursor_x = 1023;
-              if (cursor_y >= 768)  cursor_y = 767;
+              if (cursor_x >= (int)graphics_get_hres()) cursor_x = (int)graphics_get_hres() - 1;
+              if (cursor_y >= (int)graphics_get_vres()) cursor_y = (int)graphics_get_vres() - 1;
 
               GameState state = game_get_state(&game);
 
@@ -237,11 +237,6 @@ int(proj_main_loop)(int argc, char *argv[]) {
 
       } else if (state == GAME_STATE_SCOREBOARD) {
         game_draw_scoreboard(&game);
-        graphics_flush();
-
-      } else {
-        /* PLAYER_WON or PLAYER_LOST */
-        game_draw_game_over(&game);
         graphics_flush();
       }
     }

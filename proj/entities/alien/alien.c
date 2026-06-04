@@ -267,7 +267,7 @@ int alien_swarm_init(AlienSwarm *swarm) {
     return 0;
 }
 
-void alien_swarm_update(AlienSwarm *swarm) {
+void alien_swarm_update(AlienSwarm *swarm, int screen_width) {
     if (swarm == NULL) {
         return;
     }
@@ -281,7 +281,7 @@ void alien_swarm_update(AlienSwarm *swarm) {
         for (int i = 0; i < ALIEN_COUNT; i++) {
             if (swarm->aliens[i].alive) {
                 if (swarm->direction == 1 &&
-                    swarm->aliens[i].x + swarm->aliens[i].width + swarm->speed >= 1024) {
+                    swarm->aliens[i].x + swarm->aliens[i].width + swarm->speed >= screen_width) {
                     should_change_direction = true;
                 }
 

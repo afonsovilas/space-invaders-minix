@@ -6,13 +6,6 @@
 #include "font.h"
 #include "keyboard.h"
 
-/* ------------------------------------------------------------------ */
-/* Screen & layout constants                                           */
-/* ------------------------------------------------------------------ */
-
-#define SCREEN_W 1024
-#define SCREEN_H  768
-
 /* Title box */
 #define TITLE_X  162
 #define TITLE_Y   30
@@ -185,8 +178,8 @@ static void draw_background(void) {
   }
 
   for (int t = 0; t < 2; t++) {
-    graphics_draw_hline(0, (uint16_t) t,             SCREEN_W, COL_BORDER);
-    graphics_draw_hline(0, (uint16_t)(SCREEN_H-1-t), SCREEN_W, COL_BORDER);
+    graphics_draw_hline(0, (uint16_t) t,                              (uint16_t)graphics_get_hres(), COL_BORDER);
+    graphics_draw_hline(0, (uint16_t)(graphics_get_vres() - 1u - t), (uint16_t)graphics_get_hres(), COL_BORDER);
   }
 }
 
@@ -212,7 +205,7 @@ static void draw_cursor(int cx, int cy) {
   int lx = cx - 10;
   int rx = cx + 4;
   if (lx < 0) lx = 0;
-  if (rx + 6 >= SCREEN_W) rx = SCREEN_W - 7;
+  if (rx + 6 >= (int)graphics_get_hres()) rx = (int)graphics_get_hres() - 7;
   graphics_draw_hline((uint16_t) lx, (uint16_t) cy,
                       (uint16_t)(cx - 3 - lx), COL_CURSOR);
   graphics_draw_hline((uint16_t)(cx + 4), (uint16_t) cy,
@@ -220,7 +213,7 @@ static void draw_cursor(int cx, int cy) {
   for (int dy = -10; dy <= 10; dy++) {
     if (dy >= -2 && dy <= 2) continue;
     int py = cy + dy;
-    if (py >= 0 && py < SCREEN_H)
+    if (py >= 0 && py < (int)graphics_get_vres())
       graphics_draw_pixel((uint16_t) cx, (uint16_t) py, COL_CURSOR);
   }
   graphics_draw_rectangle((uint16_t)(cx - 1), (uint16_t)(cy - 1),
@@ -239,11 +232,11 @@ static void draw_main_screen(const Menu *m) {
   graphics_draw_rectangle(TITLE_X + 2, TITLE_Y + 2, TITLE_W - 4, TITLE_H - 4, COL_TITLE_BOX);
   {
     int w = font_string_width("STAR", 5);
-    font_draw_string(SCREEN_W / 2 - w / 2, TITLE_Y + 14, "STAR", COL_STAR_WORD, 5);
+    font_draw_string((int)graphics_get_hres() / 2 - w / 2, TITLE_Y + 14, "STAR", COL_STAR_WORD, 5);
   }
   {
     int w = font_string_width("SHOOTER", 4);
-    font_draw_string(SCREEN_W / 2 - w / 2, TITLE_Y + 86, "SHOOTER", COL_SHOOT_WORD, 4);
+    font_draw_string((int)graphics_get_hres() / 2 - w / 2, TITLE_Y + 86, "SHOOTER", COL_SHOOT_WORD, 4);
   }
 
   /* Separator */
@@ -289,9 +282,9 @@ static void draw_main_screen(const Menu *m) {
   {
     int cy = CTRL_Y;
     int hw = font_string_width("CONTROLS", 2);
-    font_draw_string(SCREEN_W / 2 - hw / 2, cy, "CONTROLS", COL_CTRL_HDR, 2);
+    font_draw_string((int)graphics_get_hres() / 2 - hw / 2, cy, "CONTROLS", COL_CTRL_HDR, 2);
     cy += FONT_GLYPH_H * 2 + 6;
-    graphics_draw_hline(210, (uint16_t) cy, SCREEN_W - 420, COL_SEP);
+    graphics_draw_hline(210, (uint16_t) cy, (int)graphics_get_hres() - 420, COL_SEP);
     cy += 6;
     static const char * const ROWS[] = {
       "A / D   -   MOVE PLAYER",
@@ -301,7 +294,7 @@ static void draw_main_screen(const Menu *m) {
     };
     for (int i = 0; i < 4; i++) {
       int rw = font_string_width(ROWS[i], 2);
-      font_draw_string(SCREEN_W / 2 - rw / 2, cy, ROWS[i], COL_CTRL_TEXT, 2);
+      font_draw_string((int)graphics_get_hres() / 2 - rw / 2, cy, ROWS[i], COL_CTRL_TEXT, 2);
       cy += FONT_GLYPH_H * 2 + 4;
     }
   }
@@ -310,7 +303,7 @@ static void draw_main_screen(const Menu *m) {
   {
     const char *hint = "HOVER A BUTTON AND LEFT-CLICK TO SELECT";
     int hw = font_string_width(hint, 1);
-    font_draw_string(SCREEN_W / 2 - hw / 2, SCREEN_H - 28, hint, COL_HINT, 1);
+    font_draw_string((int)graphics_get_hres() / 2 - hw / 2, (int)graphics_get_vres() - 28, hint, COL_HINT, 1);
   }
 
   /* Mouse cursor — always on top */
@@ -328,21 +321,21 @@ static void draw_name_input_screen(const Menu *m) {
   {
     const char *title = "ENTER YOUR NAME";
     int tw = font_string_width(title, 3);
-    font_draw_string((SCREEN_W - tw) / 2, 120, title, COL_NI_BOX_BRD, 3);
+    font_draw_string(((int)graphics_get_hres() - tw) / 2, 120, title, COL_NI_BOX_BRD, 3);
   }
 
   /* Sub-hint above box */
   {
     const char *sub = "TYPE YOUR NAME AND PRESS ENTER";
     int sw = font_string_width(sub, 1);
-    font_draw_string((SCREEN_W - sw) / 2, 290, sub, COL_NI_HINT, 1);
+    font_draw_string(((int)graphics_get_hres() - sw) / 2, 290, sub, COL_NI_HINT, 1);
   }
 
   /* Empty-name warning (shown only when attempted with blank field) */
   if (m->name_empty_warning) {
     const char *warn = "NAME CANNOT BE EMPTY";
     int ww = font_string_width(warn, 1);
-    font_draw_string((SCREEN_W - ww) / 2, NI_BOX_Y - 28, warn, COL_NI_WARNING, 1);
+    font_draw_string(((int)graphics_get_hres() - ww) / 2, NI_BOX_Y - 28, warn, COL_NI_WARNING, 1);
   }
 
   /* Input box — outer border then inner fill */
@@ -375,10 +368,10 @@ static void draw_name_input_screen(const Menu *m) {
   {
     int hy = NI_BOX_Y + NI_BOX_H + 28;
     const char *h1 = "PRESS ENTER TO PLAY";
-    font_draw_string((SCREEN_W - font_string_width(h1, 2)) / 2, hy, h1, COL_NI_HINT, 2);
+    font_draw_string(((int)graphics_get_hres() - font_string_width(h1, 2)) / 2, hy, h1, COL_NI_HINT, 2);
     hy += FONT_GLYPH_H * 2 + 10;
     const char *h2 = "PRESS ESC TO CANCEL";
-    font_draw_string((SCREEN_W - font_string_width(h2, 1)) / 2, hy, h2, COL_NI_CANCEL, 1);
+    font_draw_string(((int)graphics_get_hres() - font_string_width(h2, 1)) / 2, hy, h2, COL_NI_CANCEL, 1);
   }
 }
 
@@ -389,8 +382,8 @@ static void draw_name_input_screen(const Menu *m) {
 void menu_init(Menu *m) {
   if (m == NULL) return;
   m->screen           = MENU_SCREEN_MAIN;
-  m->mouse_x          = SCREEN_W / 2;
-  m->mouse_y          = SCREEN_H / 2;
+  m->mouse_x          = (int)graphics_get_hres() / 2;
+  m->mouse_y          = (int)graphics_get_vres() / 2;
   m->play_hover       = false;
   m->scores_hover     = false;
   m->quit_hover       = false;
