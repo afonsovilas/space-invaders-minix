@@ -3,121 +3,102 @@
 
 #include "alien.h"
 #include "bullet.h"
-#include "mouse.h"
 #include "player.h"
-#include "scoreboard.h"
 #include "shield.h"
 #include <stdbool.h>
 #include <stdint.h>
 
-#define MAX_PLAYER_BULLETS 3
-#define MAX_ALIEN_BULLETS 8
+/* ------------------------------------------------------------------ */
+/* Limits & animation constants                                        */
+/* ------------------------------------------------------------------ */
 
-#define MAX_EXPLOSIONS 15
+#define MAX_PLAYER_BULLETS     3
+#define MAX_ALIEN_BULLETS      8
+#define MAX_EXPLOSIONS         15
 #define EXPLOSION_FRAME_DURATION 3
-#define NUM_EXPLOSION_FRAMES 4
+#define NUM_EXPLOSION_FRAMES   4
 
-/**
- * Type of explosion animation.
- */
+/* ------------------------------------------------------------------ */
+/* Explosion                                                           */
+/* ------------------------------------------------------------------ */
+
+/** Type of explosion animation. */
 typedef enum {
   EXPLOSION_TYPE_ALIEN,
   EXPLOSION_TYPE_SHIELD
 } ExplosionType;
 
-/**
- * Structure representing an explosion.
- */
+/** One active explosion instance. */
 typedef struct {
-  int x;
-  int y;
-  int width;
-  int height;
-  int frame;
+  int  x, y;
+  int  width, height;
+  int  frame;
   bool active;
   ExplosionType type;
 } Explosion;
 
+/* ------------------------------------------------------------------ */
+/* Game  (pure simulation – no state machine, no UI, no mouse)        */
+/* ------------------------------------------------------------------ */
+
 /**
  * @defgroup game Game
- * Core game state machine for Star Shooter.
+ * Self-contained game simulation for Star Shooter.
+ *
+ * Owns all gameplay entities (player, bullets, aliens, shields,
+ * explosions) and the wave/difficulty counters.  It does NOT own
+ * the scoreboard, the application state, or any input state.
  * @{
  */
-
-/** Game state machine. */
-typedef enum {
-  GAME_STATE_MENU,
-  GAME_STATE_PLAYING,
-  GAME_STATE_SCOREBOARD
-} GameState;
-
-/**
- * Root game structure – owns all game objects and state.
- */
 typedef struct {
-  GameState state;
-
-  Player player;
-  Bullet player_bullets[MAX_PLAYER_BULLETS];
-  Bullet alien_bullets[MAX_ALIEN_BULLETS];
+  Player  player;
+  Bullet  player_bullets[MAX_PLAYER_BULLETS];
+  Bullet  alien_bullets[MAX_ALIEN_BULLETS];
 
   AlienSwarm alien_swarm;
   ShieldArray shields;
 
-  int wave;
-  int difficulty;
-
-  Scoreboard scoreboard;
+  int  wave;
+  int  difficulty;
+  bool over;               /**< Set to true when the game ends (internal) */
 
   uint32_t background_color;
-
-  int screen_width;
-  int screen_height;
-
-  MouseState mouse;
+  int      screen_width;
+  int      screen_height;
 
   Explosion explosions[MAX_EXPLOSIONS];
-
 } Game;
 
-/** Initialise the game (does not start it — state = MENU). */
-int game_init(Game *game, int screen_width, int screen_height);
+/**
+ * Initialise (or re-initialise) all game entities for a new session.
+ * Safe to call multiple times; does not touch the scoreboard.
+ */
+int  game_init(Game *game, int screen_w, int screen_h);
 
-/** Transition from MENU → PLAYING. */
-void game_start(Game *game);
+/**
+ * Advance game logic one tick.
+ * @return true  – simulation is still running
+ * @return false – game has ended (player dead or aliens reached player)
+ */
+bool game_update(Game *game);
 
-/** Starts the next alien wave after all aliens are cleared. */
-void game_next_wave(Game *game);
-
-/** Update game logic one tick. */
-void game_update(Game *game);
-
-/** Draw all game objects + HUD into the back-buffer. */
+/** Draw all game objects + HUD into the back-buffer (does not flush). */
 void game_draw(const Game *game);
 
-/** Draw scoreboard screen. */
-void game_draw_scoreboard(const Game *game);
-
-/** Enter scoreboard state. */
-void game_enter_scoreboard(Game *game);
-
-/** Fires a bullet from the player if one is available. */
+/** Fire a player bullet from the current player position, if one is free. */
 void game_fire_player_bullet(Game *game);
 
-/** Process keyboard input. */
-void game_handle_keyboard_input(Game *game, uint8_t scancode, bool *running);
-
-/** Return current game state. */
-GameState game_get_state(const Game *game);
+/** Advance to the next wave; called internally when all aliens are killed. */
+void game_next_wave(Game *game);
 
 /** Return current score. */
-int game_get_score(const Game *game);
+int  game_get_score(const Game *game);
 
 /** Return remaining lives. */
-int game_get_lives(const Game *game);
+int  game_get_lives(const Game *game);
 
-/** Return current wave. */
-int game_get_wave(const Game *game);
+/** Return current wave number. */
+int  game_get_wave(const Game *game);
 
 /**@}*/
 
