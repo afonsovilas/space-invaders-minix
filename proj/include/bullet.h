@@ -28,6 +28,8 @@ typedef struct {
  * Estrutura que representa uma bala.
  * Pode ser do jogador ou alienígena.
  */
+#define BULLET_TRAIL_LENGTH 4
+
 typedef struct {
     int x;                      /* Posição X */
     int y;                      /* Posição Y */
@@ -37,6 +39,10 @@ typedef struct {
     uint32_t color;             /* Cor para renderização */
     bool active;                /* Se a bala está ativa */
     BulletDirection direction;  /* Direção de movimento */
+
+    int trail_x[BULLET_TRAIL_LENGTH];
+    int trail_y[BULLET_TRAIL_LENGTH];
+    int trail_count;
 } Bullet;
 
 /**

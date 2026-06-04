@@ -1,6 +1,6 @@
 #include "alien.h"
 #include "graphics.h"
-#include "sprites.h"
+#include "sprites/alien_sprites.h"
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -43,6 +43,7 @@ void alien_fire_bullet(Bullet *bullet, const Alien *alien) {
     bullet->active = true;
     bullet->x = alien->x + alien->width  / 2 - bullet->width / 2;
     bullet->y = alien->y + alien->height;
+    bullet->trail_count = 0;
 }
 
 /*

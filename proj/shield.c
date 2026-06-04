@@ -1,6 +1,6 @@
 #include "shield.h"
 #include "graphics.h"
-#include "sprites.h"
+#include "sprites/shield_sprites.h"
 #include <stddef.h>
 
 /* Constantes padrão para escudos */

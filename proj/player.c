@@ -1,6 +1,6 @@
 #include "player.h"
 #include "graphics.h"
-#include "sprites.h"
+#include "sprites/player_sprites.h"
 #include <stddef.h>
 
 /* Constantes padrão para o jogador */
@@ -33,6 +33,7 @@ void player_fire_bullet(Bullet *bullet, const Player *player) {
     bullet->active = true;
     bullet->x = player->x + player->width  / 2 - bullet->width / 2;
     bullet->y = player->y - bullet->height;
+    bullet->trail_count = 0;
 }
 
 int player_init(Player *player) {

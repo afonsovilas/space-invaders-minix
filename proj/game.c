@@ -1,5 +1,6 @@
 #include "game.h"
-#include "sprites.h"
+#include "sprites/heart_sprites.h"
+#include "sprites/explosion_sprites.h"
 #include "graphics.h"
 #include "keyboard.h"
 #include "font.h"
