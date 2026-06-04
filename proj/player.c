@@ -1,5 +1,6 @@
 #include "player.h"
 #include "graphics.h"
+#include "sprites.h"
 #include <stddef.h>
 
 /* Constantes padrão para o jogador */
@@ -76,9 +77,8 @@ void player_draw(const Player *player) {
         return;
     }
     
-    graphics_draw_rectangle(player->x, player->y, 
-                           player->width, player->height, 
-                           player->color);
+    graphics_draw_xpm((xpm_map_t) PLAYER_SPRITE,
+                      (uint16_t) player->x, (uint16_t) player->y);
 }
 
 void player_erase(const Player *player, uint32_t background_color) {

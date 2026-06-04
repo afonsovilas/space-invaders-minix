@@ -1,5 +1,6 @@
 #include "shield.h"
 #include "graphics.h"
+#include "sprites.h"
 #include <stddef.h>
 
 /* Constantes padrão para escudos */
@@ -41,9 +42,9 @@ void shield_array_draw(const ShieldArray *shields) {
     
     for (int i = 0; i < SHIELD_COUNT; i++) {
         if (shields->shields[i].alive) {
-            graphics_draw_rectangle(shields->shields[i].x, shields->shields[i].y,
-                                   shields->shields[i].width, shields->shields[i].height,
-                                   shields->shields[i].color);
+            graphics_draw_xpm((xpm_map_t) SHIELD_SPRITE,
+                              (uint16_t) shields->shields[i].x,
+                              (uint16_t) shields->shields[i].y);
         }
     }
 }

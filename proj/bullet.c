@@ -1,5 +1,6 @@
 #include "bullet.h"
 #include "graphics.h"
+#include "sprites.h"
 #include <stddef.h>
 
 int bullet_init(Bullet *bullet, const BulletConfig *config) {
@@ -39,9 +40,8 @@ void bullet_draw(const Bullet *bullet) {
         return;
     }
     
-    graphics_draw_rectangle(bullet->x, bullet->y, 
-                           bullet->width, bullet->height, 
-                           bullet->color);
+    graphics_draw_xpm((xpm_map_t) BULLET_SPRITE,
+                      (uint16_t) bullet->x, (uint16_t) bullet->y);
 }
 
 void bullet_erase(const Bullet *bullet, uint32_t background_color) {
