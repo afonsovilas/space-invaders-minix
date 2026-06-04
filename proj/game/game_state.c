@@ -28,7 +28,7 @@ void game_state_draw(const AppContext *ctx) {
 }
 
 void game_state_handle_key(AppContext *ctx, uint8_t sc) {
-  if (sc == KBD_ESC_BREAK)  { ctx->current = APP_STATE_EXIT; return; }
+  if (sc == KBD_ESC_BREAK)  { ctx->current = APP_STATE_MENU; return; }
 
   if (sc == KBD_A_MAKE)     ctx->game.player.moving_left  = true;
   if (sc == KBD_A_BREAK)    ctx->game.player.moving_left  = false;
