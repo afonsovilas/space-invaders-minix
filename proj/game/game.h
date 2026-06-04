@@ -93,7 +93,7 @@ void game_next_wave(Game *game);
 void game_update(Game *game);
 
 /** Draw all game objects + HUD into the back-buffer. */
-void game_draw(Game *game);
+void game_draw(const Game *game);
 
 /** Draw scoreboard screen. */
 void game_draw_scoreboard(const Game *game);

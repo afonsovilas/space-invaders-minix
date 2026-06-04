@@ -1,6 +1,7 @@
 #include "font.h"
 #include "graphics.h"
 #include <stddef.h>
+#include <string.h>
 
 /**
  * 5×7 pixel glyph bitmaps for ASCII 0x20 (space) through 0x5A ('Z').
@@ -107,8 +108,7 @@ void font_draw_string(int x, int y, const char *str, uint32_t color, int scale) 
 
 int font_string_width(const char *str, int scale) {
   if (str == NULL) return 0;
-  int len = 0;
-  for (int i = 0; str[i] != '\0'; i++) len++;
+  int len = (int) strlen(str);
   if (len == 0) return 0;
   /* Total = (chars × step) − last spacing */
   return len * (FONT_GLYPH_W + FONT_SPACING) * scale - FONT_SPACING * scale;
