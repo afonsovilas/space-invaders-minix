@@ -2,6 +2,7 @@
 #define _PROJ_I8042_H_
 
 #include <lcom/lcf.h>
+#include "utils.h"
 
 /** @defgroup i8042 i8042
  * Constants for the i8042 KBC and PS/2 mouse/keyboard controller.
@@ -66,9 +67,6 @@
 /* Timing */
 #define KBC_DELAY_US  20000
 #define KBC_MAX_TRIES 10
-
-/** Utility: read one byte from an I/O port (wraps sys_inb). */
-int util_sys_inb(int port, uint8_t *value);
 
 /**@}*/
 

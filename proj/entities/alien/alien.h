@@ -49,9 +49,10 @@ void alien_swarm_apply_difficulty(AlienSwarm *swarm, int difficulty);
 /**
  * Atualiza a posição de todos os alienigenas.
  * 
- * @param swarm Pointer para a estrutura AlienSwarm
+ * @param swarm        Pointer para a estrutura AlienSwarm
+ * @param screen_width Largura da tela em pixels (limite de borda direita)
  */
-void alien_swarm_update(AlienSwarm *swarm);
+void alien_swarm_update(AlienSwarm *swarm, int screen_width);
 
 /**
  * Verifica se todos os alienigenas foram eliminados.

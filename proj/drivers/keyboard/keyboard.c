@@ -15,19 +15,6 @@ static volatile bool kbd_data_available = false;
 /* Set when 0xE0 extended prefix has been received; next byte is the real code. */
 static volatile bool kbd_extended = false;
 
-/**
- * Utility wrapper around sys_inb – returns an 8-bit value.
- * Defined here so both keyboard and mouse modules share the same definition.
- * LCF wraps this function for grading (hence the parentheses around the name).
- */
-int (util_sys_inb)(int port, uint8_t *value) {
-  uint32_t data;
-  if (value == NULL) return 1;
-  if (sys_inb(port, &data) != 0) return 1;
-  *value = (uint8_t)(data & 0xFF);
-  return 0;
-}
-
 int keyboard_subscribe_int(uint8_t *bit_no) {
   if (bit_no == NULL) return 1;
   *bit_no = (uint8_t) kbd_hook_id;

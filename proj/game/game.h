@@ -49,8 +49,6 @@ typedef struct {
 typedef enum {
   GAME_STATE_MENU,
   GAME_STATE_PLAYING,
-  GAME_STATE_PLAYER_WON,
-  GAME_STATE_PLAYER_LOST,
   GAME_STATE_SCOREBOARD
 } GameState;
 
@@ -110,12 +108,6 @@ void game_update(Game *game);
 /** Draw all game objects + HUD into the back-buffer. */
 void game_draw(Game *game);
 
-/** Erase all game objects. */
-void game_erase(Game *game);
-
-/** Draw game over screen. */
-void game_draw_game_over(const Game *game);
-
 /** Draw scoreboard screen. */
 void game_draw_scoreboard(const Game *game);
 
@@ -127,9 +119,6 @@ void game_fire_player_bullet(Game *game);
 
 /** Process keyboard input. */
 void game_handle_keyboard_input(Game *game, uint8_t scancode, bool *running);
-
-/** Process mouse packet. */
-void game_handle_mouse_packet(Game *game, const uint8_t bytes[3]);
 
 /** Return current game state. */
 GameState game_get_state(const Game *game);
