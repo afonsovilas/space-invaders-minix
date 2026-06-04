@@ -1,9 +1,13 @@
 #ifndef HEART_SPRITES_H
 #define HEART_SPRITES_H
 
-/* ---------------------------------------------------------------------
- * HEART_SPRITE  -  21 x 17 pixels, 2 colors
- * ------------------------------------------------------------------- */
+/**
+ * @defgroup heart_sprites Heart Sprites
+ * XPM sprite data for lives/health indicator.
+ * @{
+ */
+
+/** Heart sprite (21×17 px, 2 colors). */
 static const char * const HEART_SPRITE[] = {
     "21 17 2",
     "  0",
@@ -26,5 +30,7 @@ static const char * const HEART_SPRITE[] = {
     "          R          ", /* row 15 */
     "                     ", /* row 16 */
 };
+
+/** @} */
 
 #endif /* HEART_SPRITES_H */

@@ -4,48 +4,66 @@
 #include <stdint.h>
 
 /**
- * @defgroup font Pixel Font
- * 5×7 pixel bitmap font rendered via graphics_draw_rectangle().
- * Supports ASCII 0x20 (space) through 0x5A ('Z').
- *
- * Usage:
- *   font_draw_string(x, y, "SCORE 100", 0x0E, 2);  // scale 2 = 10×14 px per char
+ * @defgroup font Pixel Font Renderer
+ * 5×7 pixel bitmap font for rendering text on screen.
+ * Supports ASCII characters from space (0x20) to 'Z' (0x5A).
  * @{
  */
 
-#define FONT_GLYPH_W 5  /**< Glyph width  in pixels at scale 1 */
-#define FONT_GLYPH_H 7  /**< Glyph height in pixels at scale 1 */
-#define FONT_SPACING 1  /**< Inter-character gap in pixels at scale 1 */
+/** Glyph width in pixels at scale 1. */
+#define FONT_GLYPH_W 5
+
+/** Glyph height in pixels at scale 1. */
+#define FONT_GLYPH_H 7
+
+/** Inter-character gap in pixels at scale 1. */
+#define FONT_SPACING 1
 
 /**
- * Draw a single character.
- * @param x      Top-left X position
- * @param y      Top-left Y position
- * @param ch     Character to draw (ASCII 0x20–0x5A)
- * @param color  Colour index (8-bit VGA palette)
- * @param scale  Pixel multiplier (1=5×7 px, 2=10×14 px, …)
+ * Draws a single character at the specified position.
+ *
+ * @param x     Top-left X position
+ * @param y     Top-left Y position
+ * @param ch    Character to draw (ASCII 0x20–0x5A)
+ * @param color Colour index
+ * @param scale Pixel multiplier (scale 1 = 5×7 px, scale 2 = 10×14 px, etc.)
  */
 void font_draw_char(int x, int y, char ch, uint32_t color, int scale);
 
 /**
- * Draw a null-terminated string.
+ * Draws a null-terminated string at the specified position.
+ *
+ * @param x     Top-left X position
+ * @param y     Top-left Y position
+ * @param str   Null-terminated string to draw
+ * @param color Colour index
+ * @param scale Pixel multiplier
  */
 void font_draw_string(int x, int y, const char *str, uint32_t color, int scale);
 
 /**
- * Compute the pixel width of a string at a given scale.
- * Useful for centering: x = screen_w/2 - font_string_width(s,scale)/2
+ * Calculates the pixel width of a string at a given scale.
+ * Useful for centering text calculations.
+ *
+ * @param str   Null-terminated string
+ * @param scale Pixel multiplier
+ * @return Width in pixels
  */
 int font_string_width(const char *str, int scale);
 
 /**
- * Draw a null-terminated string horizontally centred on pixel column cx.
- * Equivalent to:
- *   font_draw_string(cx - font_string_width(str,scale)/2, y, str, color, scale)
+ * Draws a null-terminated string horizontally centred on a column.
+ * Equivalent to drawing at: cx - font_string_width(str, scale) / 2
+ *
+ * @param cx    Centre X column
+ * @param y     Top-left Y position
+ * @param str   Null-terminated string to draw
+ * @param color Colour index
+ * @param scale Pixel multiplier
  */
 void font_draw_string_centred(int cx, int y, const char *str,
                                uint32_t color, int scale);
 
-/**@}*/
+/** @} */
 
 #endif /* FONT_H */

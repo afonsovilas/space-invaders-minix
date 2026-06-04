@@ -6,133 +6,136 @@
 #include "bullet.h"
 #include "scoreboard.h"
 
-/** Maximum number of lives the player starts with. */
+/**
+ * @defgroup player Player Entity
+ * The player-controlled spaceship with movement, shooting, and damage state.
+ * @{
+ */
+
+/** Maximum lives the player starts with. */
 #define MAX_LIVES 3
 
 /**
- * Estrutura que representa o jogador.
- * Contém posição, dimensões, velocidade, estado de movimento,
- * estatísticas (score, lives, name) e estado visual de blink ao ser atingido.
+ * @struct Player
+ * Represents the player spaceship.
+ * Tracks position, movement input, statistics (score/lives), and visual blink state.
  */
 typedef struct {
-    int x;                          /* Posição X do jogador */
-    int y;                          /* Posição Y do jogador */
-    int width;                      /* Largura do jogador */
-    int height;                     /* Altura do jogador */
-    int speed;                          /* Velocidade de movimento */
-
-    int initial_x;                  /* Posição inicial X (para reset) */
-    int initial_y;                  /* Posição inicial Y (para reset) */
-
-    /* Player stats */
-    int score;                      /* Pontuação acumulada */
-    int lives;                      /* Vidas restantes */
-    char name[SCOREBOARD_NAME_LEN]; /* Nome introduzido no menu */
-
-    /* Input state */
-    bool moving_left;               /* Tecla de movimento esquerda pressionada */
-    bool moving_right;              /* Tecla de movimento direita pressionada */
-
-    /* Hit-flash visual state */
-    bool is_blinking;               /* Verdadeiro enquanto o jogador pisca após ser atingido */
-    int  blink_timer;               /* Ticks restantes de animação de blink */
-    bool blink_show;                /* Verdadeiro quando o sprite deve ser desenhado durante o blink */
+  int x, y;                         /**< Current position */
+  int width, height;                /**< Dimensions */
+  int speed;                        /**< Movement speed (pixels/frame) */
+  
+  int initial_x, initial_y;         /**< Starting position (for reset) */
+  
+  int score;                        /**< Accumulated score */
+  int lives;                        /**< Remaining lives */
+  char name[SCOREBOARD_NAME_LEN];   /**< Player name from menu */
+  
+  bool moving_left;                 /**< Left key pressed */
+  bool moving_right;                /**< Right key pressed */
+  
+  bool is_blinking;                 /**< Blinking animation active (after hit) */
+  int  blink_timer;                 /**< Remaining blink animation frames */
+  bool blink_show;                  /**< Whether sprite is visible this frame */
 } Player;
 
 /**
- * Inicializa a estrutura do jogador com valores padrão.
+ * Initializes a Player with default starting values.
  *
- * @param player Pointer para a estrutura Player
- * @return 0 se bem-sucedido, -1 caso contrário
+ * @param player Pointer to the Player structure to initialize
+ * @return 0 on success, -1 if pointer is NULL
  */
 int player_init(Player *player);
 
 /**
- * Move o jogador para a esquerda, respeitando os limites da tela.
+ * Moves the Player left, respecting screen boundaries.
  *
- * @param player Pointer para a estrutura Player
- * @param screen_width Largura total da tela
+ * @param player        Pointer to the Player
+ * @param screen_width  Screen width (used to enforce left boundary)
  */
 void player_move_left(Player *player, int screen_width);
 
 /**
- * Move o jogador para a direita, respeitando os limites da tela.
+ * Moves the Player right, respecting screen boundaries.
  *
- * @param player Pointer para a estrutura Player
- * @param screen_width Largura total da tela
+ * @param player        Pointer to the Player
+ * @param screen_width  Screen width (used to enforce right boundary)
  */
 void player_move_right(Player *player, int screen_width);
 
 /**
- * Desenha o jogador na tela.
+ * Renders the Player sprite to the back-buffer.
  *
- * @param player Pointer para a estrutura Player
+ * @param player Pointer to the Player to render
  */
 void player_draw(const Player *player);
 
 /**
- * Apaga o jogador da tela (desenha com cor de fundo).
+ * Erases the Player by overwriting it with background colour.
  *
- * @param player Pointer para a estrutura Player
- * @param background_color Cor de fundo
+ * @param player              Pointer to the Player
+ * @param background_color    Background colour to fill with
  */
 void player_erase(const Player *player, uint32_t background_color);
 
 /**
- * Reposiciona o jogador na posição inicial.
- * Utilizado quando o jogador é atingido por uma bala alienígena.
+ * Resets the Player to starting position.
+ * Called when hit by an alien bullet.
  *
- * @param player Pointer para a estrutura Player
+ * @param player Pointer to the Player
  */
 void player_reset_position(Player *player);
 
 /**
- * Redefine o estado de movimento e de blink do jogador.
- * Chamado no início de cada nova onda (wave).
+ * Resets movement and blink state.
+ * Called at the start of each new wave.
  *
- * @param player Pointer para a estrutura Player
+ * @param player Pointer to the Player
  */
 void player_reset_state(Player *player);
 
 /**
- * Atualiza a animação de blink do jogador (deve ser chamado uma vez por tick).
- * Decrementa o timer e alterna a visibilidade do sprite.
+ * Updates the blink animation (called once per frame).
+ * Decrements the blink timer and toggles visibility.
  *
- * @param player Pointer para a estrutura Player
+ * @param player Pointer to the Player
  */
 void player_update_blinking(Player *player);
 
 /**
- * Retorna verdadeiro se o sprite do jogador deve ser desenhado neste tick.
- * Falso durante o intervalo "escondido" da animação de blink.
+ * Checks if the Player sprite should be drawn this frame.
+ * Returns false during the "hidden" phase of the blink animation.
  *
- * @param player Pointer para a estrutura Player
- * @return true se visível, false se oculto pelo blink
+ * @param player Pointer to the Player
+ * @return true if visible, false if hidden by blink animation
  */
 bool player_is_visible(const Player *player);
 
 /**
- * Processa um impacto no jogador: decrementa uma vida e inicia a animação
- * de blink. Deve ser chamado apenas quando !player->is_blinking.
- * O chamador é responsável por verificar player->lives <= 0.
+ * Processes a hit on the Player.
+ * Decrements lives and starts the blink animation.
+ * Should only be called when !player->is_blinking.
+ * Caller must check player->lives <= 0 for game over.
  *
- * @param player Pointer para a estrutura Player
+ * @param player Pointer to the Player
  */
 void player_on_hit(Player *player);
 
 /**
- * Bullet configuration for the player shooter.
+ * Bullet configuration for player shots.
  * Pass to bullet_init() when creating a player bullet.
  */
 extern const BulletConfig PLAYER_BULLET_CONFIG;
 
 /**
- * Fires a bullet from the given player.
- * Positions the bullet at the top-centre of the player and marks it active.
+ * Fires a bullet from the Player.
+ * Positions the bullet at the top-centre of the player.
  *
- * @param bullet  Pointer to the Bullet to fire.
- * @param player  The player that is shooting.
+ * @param bullet Pointer to the Bullet to fire
+ * @param player The Player that is shooting
  */
 void player_fire_bullet(Bullet *bullet, const Player *player);
+
+/** @} */
 
 #endif /* PLAYER_H */

@@ -1,9 +1,13 @@
 #ifndef BULLET_SPRITES_H
 #define BULLET_SPRITES_H
 
-/* ---------------------------------------------------------------------
- * BULLET_SPRITE     6 x 14 pixels, 3 colors
- * ------------------------------------------------------------------- */
+/**
+ * @defgroup bullet_sprites Bullet Sprites
+ * XPM sprite data for projectiles.
+ * @{
+ */
+
+/** Bullet sprite (6×14 px, 3 colors). */
 static const char * const BULLET_SPRITE[] = {
     "6 14 3",
     "  0",
@@ -24,5 +28,7 @@ static const char * const BULLET_SPRITE[] = {
     " XXXX ", /* row 12 */
     "  XX  ", /* row 13 */
 };
+
+/** @} */
 
 #endif /* BULLET_SPRITES_H */

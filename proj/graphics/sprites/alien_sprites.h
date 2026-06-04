@@ -1,9 +1,13 @@
 #ifndef ALIEN_SPRITES_H
 #define ALIEN_SPRITES_H
 
-/* ---------------------------------------------------------------------
- * ALIEN_SPRITE     40 x 25 pixels, 3 colors
- * ------------------------------------------------------------------- */
+/**
+ * @defgroup alien_sprites Alien Sprites
+ * XPM sprite data for aliens.
+ * @{
+ */
+
+/** Alien sprite (40×25 px, 3 colors). */
 static const char * const ALIEN_SPRITE[] = {
     "40 25 3",
     "  0",
@@ -35,5 +39,7 @@ static const char * const ALIEN_SPRITE[] = {
     "       XXXX                  XXXX       ", /* row 23 */
     "       XXXX                  XXXX       ", /* row 24 */
 };
+
+/** @} */
 
 #endif /* ALIEN_SPRITES_H */

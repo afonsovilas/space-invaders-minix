@@ -5,44 +5,57 @@
 #include <stdint.h>
 
 /**
- * @defgroup menu_state Menu State
- * StateHandler implementation for APP_STATE_MENU.
- *
- * Bridges the AppContext to the Menu module.  All menu logic stays in
- * menu.c / menu.h; this layer only translates MenuAction values into
- * ctx->current transitions and copies shared data (player name) at the
- * right moment.
+ * @defgroup menu_state Menu State Machine
+ * App state callbacks for the main menu (APP_STATE_MENU and APP_STATE_NAME_INPUT).
+ * Routes mouse input to menu, handles menu transitions, and manages player name entry.
  * @{
  */
 
-/** Reset the Menu to its initial state. */
-void menu_state_on_enter    (AppContext *ctx);
-
 /**
- * Tick the blink timer and check for a pending MenuAction.
- * Sets ctx->current on transition:
- *   MENU_ACTION_PLAY   → APP_STATE_PLAYING  (copies player name first)
- *   MENU_ACTION_SCORES → APP_STATE_SCOREBOARD
- *   MENU_ACTION_QUIT   → APP_STATE_EXIT
+ * Initializes the menu.
+ *
+ * @param ctx Pointer to application context
  */
-void menu_state_update      (AppContext *ctx);
-
-/** Render the active menu screen into the back-buffer. */
-void menu_state_draw        (const AppContext *ctx);
+void menu_state_on_enter(AppContext *ctx);
 
 /**
- * Dispatch keyboard input.
- * While name-entry is active: delegates entirely to menu_name_input_handle_key.
- * On main screen: sets ctx->current = APP_STATE_EXIT on ESC.
+ * Updates the menu and checks for button clicks.
+ * Transitions based on selected action:
+ * - Play → enters name input state
+ * - Scores → displays scoreboard
+ * - Quit → exits application
+ *
+ * @param ctx Pointer to application context
  */
-void menu_state_handle_key  (AppContext *ctx, uint8_t sc);
+void menu_state_update(AppContext *ctx);
 
 /**
- * Update cursor position and propagate hover / click to Menu.
- * Never changes ctx->current.
+ * Renders the active menu screen.
+ *
+ * @param ctx Pointer to application context
+ */
+void menu_state_draw(const AppContext *ctx);
+
+/**
+ * Routes keyboard input.
+ * ESC key exits to application exit state.
+ *
+ * @param ctx Pointer to application context
+ * @param sc  Keyboard scancode
+ */
+void menu_state_handle_key(AppContext *ctx, uint8_t sc);
+
+/**
+ * Updates cursor position and propagates hover/click to menu.
+ * Does not change application state.
+ *
+ * @param ctx Pointer to application context
+ * @param x   Mouse X coordinate
+ * @param y   Mouse Y coordinate
+ * @param lb  Left button pressed flag
  */
 void menu_state_handle_mouse(AppContext *ctx, int x, int y, bool lb);
 
-/**@}*/
+/** @} */
 
 #endif /* MENU_STATE_H */
