@@ -19,8 +19,7 @@ typedef struct {
     int y;                          /* Posição Y do jogador */
     int width;                      /* Largura do jogador */
     int height;                     /* Altura do jogador */
-    int speed;                      /* Velocidade de movimento */
-    uint32_t color;                 /* Cor para renderização */
+    int speed;                          /* Velocidade de movimento */
 
     int initial_x;                  /* Posição inicial X (para reset) */
     int initial_y;                  /* Posição inicial Y (para reset) */

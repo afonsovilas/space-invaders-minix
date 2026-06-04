@@ -17,17 +17,8 @@
 #define HUD_LINE_COLOR   0x09u   /* bright blue separator */
 #define HUD_SCORE_COLOR  0x0Eu   /* yellow */
 #define HUD_LIVES_COLOR  0x0Cu   /* red    */
-#define CURSOR_COLOR     0x0Fu   /* white  */
-#define CURSOR_DOT_COLOR 0x0Cu   /* red centre dot */
 
 #define HUD_H 34   /* height of the HUD bar in pixels */
-
-#define LIVES_START_X    20
-#define LIVES_START_Y    20
-#define LIVES_WIDTH      20
-#define LIVES_HEIGHT     10
-#define LIVES_SPACING    30
-#define LIVES_CLEAR_WIDTH (MAX_LIVES * LIVES_SPACING)
 
 static bool check_collision(int x1, int y1, int w1, int h1,
                              int x2, int y2, int w2, int h2) {
@@ -248,32 +239,6 @@ static void game_update_explosions(Game *game) {
     }
 }
 
-static void game_erase_entities(Game *game) {
-    player_erase(&game->player, game->background_color);
-
-    for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
-        if (game->player_bullets[i].active) {
-            bullet_erase(&game->player_bullets[i], game->background_color);
-        }
-    }
-
-    for (int i = 0; i < MAX_ALIEN_BULLETS; i++) {
-        if (game->alien_bullets[i].active) {
-            bullet_erase(&game->alien_bullets[i], game->background_color);
-        }
-    }
-
-    alien_swarm_erase(&game->alien_swarm, game->background_color);
-
-    for (int i = 0; i < MAX_EXPLOSIONS; i++) {
-        if (game->explosions[i].active) {
-            graphics_draw_rectangle(game->explosions[i].x, game->explosions[i].y,
-                                    game->explosions[i].width, game->explosions[i].height,
-                                    game->background_color);
-        }
-    }
-}
-
 static void game_update_positions(Game *game) {
     if (game->player.moving_left) {
         player_move_left(&game->player, game->screen_width);
@@ -482,7 +447,6 @@ void game_update(Game *game) {
     game->mouse.lb_prev = game->mouse.lb;
 
     player_update_blinking(&game->player);
-    game_erase_entities(game);
     game_update_positions(game);
     game_update_explosions(game);
 

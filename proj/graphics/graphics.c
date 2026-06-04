@@ -7,8 +7,6 @@
 #include <sys/mman.h>
 #include "graphics.h"
 
-#include "graphics.h"
-
 /* ---- Module state ---- */
 static uint8_t        *video_mem   = NULL;  /**< Mapped VRAM (write-only during flush) */
 static uint8_t        *back_buffer = NULL;  /**< Off-screen draw surface */
@@ -18,8 +16,6 @@ static uint16_t hres;
 static uint16_t vres;
 static unsigned bytes_per_pixel;
 static unsigned bytes_per_line;
-
-/* ---- Module state ---- */
 
 static int video_set_mode(uint16_t mode) {
   reg86_t r;

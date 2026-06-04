@@ -17,7 +17,6 @@ typedef struct {
     int y;                      /* Posição Y */
     int width;                  /* Largura */
     int height;                 /* Altura */
-    uint32_t color;             /* Cor para renderização */
     bool alive;                 /* Se está vivo */
 } Alien;
 
@@ -33,7 +32,6 @@ typedef struct {
     int move_interval;          /* Intervalo de frames entre movimentos */
     int shoot_counter;          /* Contador para disparo alienígena */
     int shoot_interval;         /* Intervalo entre disparos */
-    int shoot_column;           /* Coluna atual para disparo rotativo */
 } AlienSwarm;
 
 /**
