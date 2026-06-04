@@ -1,5 +1,6 @@
 #include "alien.h"
 #include "graphics.h"
+#include "sprites.h"
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -393,9 +394,9 @@ void alien_swarm_draw(const AlienSwarm *swarm) {
 
     for (int i = 0; i < ALIEN_COUNT; i++) {
         if (swarm->aliens[i].alive) {
-            graphics_draw_rectangle(swarm->aliens[i].x, swarm->aliens[i].y,
-                                   swarm->aliens[i].width, swarm->aliens[i].height,
-                                   swarm->aliens[i].color);
+            graphics_draw_xpm((xpm_map_t) ALIEN_SPRITE,
+                              (uint16_t) swarm->aliens[i].x,
+                              (uint16_t) swarm->aliens[i].y);
         }
     }
 }
