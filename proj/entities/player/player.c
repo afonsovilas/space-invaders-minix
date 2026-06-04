@@ -10,7 +10,6 @@
 #define PLAYER_WIDTH 60
 #define PLAYER_HEIGHT 30
 #define PLAYER_SPEED 5
-#define PLAYER_COLOR 0x2A
 
 /* Constantes para bala do jogador */
 #define PLAYER_BULLET_WIDTH  6
@@ -53,7 +52,6 @@ int player_init(Player *player) {
     player->width = PLAYER_WIDTH;
     player->height = PLAYER_HEIGHT;
     player->speed = PLAYER_SPEED;
-    player->color = PLAYER_COLOR;
 
     player->score = 0;
     player->lives = MAX_LIVES;

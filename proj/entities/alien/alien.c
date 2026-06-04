@@ -18,7 +18,6 @@
 #define ALIEN_Y_SPACING 20
 #define ALIEN_SPEED 2
 #define ALIEN_DROP 20
-#define ALIEN_COLOR 0x1C
 #define ALIEN_MOVE_INTERVAL 10
 #define ALIEN_SHOOT_INTERVAL 120
 
@@ -51,10 +50,7 @@ void alien_fire_bullet(Bullet *bullet, const Alien *alien) {
 
   ALIEN_COUNT is the maximum possible number of slots:
   ALIEN_ROWS * ALIEN_COLS
-
-  You can adjust ALIEN_MIN_RANDOM_COUNT if you want fewer/more aliens.
 */
-#define ALIEN_MIN_RANDOM_COUNT 8
 
 static int random_initialized = 0;
 
@@ -87,7 +83,6 @@ int alien_swarm_init(AlienSwarm *swarm) {
     swarm->move_interval = ALIEN_MOVE_INTERVAL;
     swarm->shoot_counter = 0;
     swarm->shoot_interval = ALIEN_SHOOT_INTERVAL;
-    swarm->shoot_column = 0;
 
     /*
       Random number of active rows.
@@ -122,7 +117,6 @@ int alien_swarm_init(AlienSwarm *swarm) {
             swarm->aliens[i].y = formation_start_y + row * (ALIEN_HEIGHT + ALIEN_Y_SPACING);
             swarm->aliens[i].width = ALIEN_WIDTH;
             swarm->aliens[i].height = ALIEN_HEIGHT;
-            swarm->aliens[i].color = ALIEN_COLOR;
             swarm->aliens[i].alive = false;
         }
     }

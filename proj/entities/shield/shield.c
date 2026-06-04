@@ -6,7 +6,6 @@
 /* Constantes padrão para escudos */
 #define SHIELD_WIDTH 90
 #define SHIELD_HEIGHT 30
-#define SHIELD_COLOR 0x02
 #define SHIELD_INITIAL_Y 400
 #define SHIELD_X_SPACING 220
 
@@ -20,7 +19,6 @@ int shield_array_init(ShieldArray *shields) {
         shields->shields[i].y = SHIELD_INITIAL_Y;
         shields->shields[i].width = SHIELD_WIDTH;
         shields->shields[i].height = SHIELD_HEIGHT;
-        shields->shields[i].color = SHIELD_COLOR;
         shields->shields[i].alive = true;
     }
     

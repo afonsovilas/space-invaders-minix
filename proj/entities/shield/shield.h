@@ -14,7 +14,6 @@ typedef struct {
     int y;                      /* Posição Y */
     int width;                  /* Largura */
     int height;                 /* Altura */
-    uint32_t color;             /* Cor para renderização */
     bool alive;                 /* Se ainda existe */
 } Shield;
 

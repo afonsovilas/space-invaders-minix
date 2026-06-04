@@ -94,7 +94,6 @@ void bullet_draw(const Bullet *bullet) {
         if (bullet->direction == BULLET_DIR_UP) {
             tcolor = (i == 0) ? 0x07u : 0x08u; /* Fading greys */
         } else {
-            tcolor = bullet->color;
             if (i == 0)      tcolor = 0x0Eu; /* Faded yellow  */
             else if (i == 1) tcolor = 0x06u; /* Brown/orange  */
             else             tcolor = 0x14u; /* Dark brown    */
