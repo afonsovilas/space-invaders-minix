@@ -14,9 +14,18 @@ SRCS= main.c        \
       menu.c        \
       scoreboard.c
 
-.PATH: drivers graphics entities game ui
+.PATH: drivers/keyboard drivers/mouse drivers/timer \
+       graphics \
+       entities/player entities/alien entities/bullet entities/shield \
+       game \
+       ui/menu ui/scoreboard
 
-CPPFLAGS += -I. -Idrivers -Igraphics -Ientities -Igame -Iui
+CPPFLAGS += -I. \
+            -Idrivers -Idrivers/keyboard -Idrivers/mouse -Idrivers/timer \
+            -Igraphics -Igraphics/sprites \
+            -Ientities -Ientities/player -Ientities/alien -Ientities/bullet -Ientities/shield \
+            -Igame \
+            -Iui -Iui/menu -Iui/scoreboard
 
 DPADD += ${LIBLCF}
 LDADD += -llcf
