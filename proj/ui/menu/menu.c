@@ -202,22 +202,7 @@ static void draw_button(int x, int y, int w, int h, const char *label,
 }
 
 static void draw_cursor(int cx, int cy) {
-  int lx = cx - 10;
-  int rx = cx + 4;
-  if (lx < 0) lx = 0;
-  if (rx + 6 >= (int)graphics_get_hres()) rx = (int)graphics_get_hres() - 7;
-  graphics_draw_hline((uint16_t) lx, (uint16_t) cy,
-                      (uint16_t)(cx - 3 - lx), COL_CURSOR);
-  graphics_draw_hline((uint16_t)(cx + 4), (uint16_t) cy,
-                      (uint16_t)(rx - cx - 3), COL_CURSOR);
-  for (int dy = -10; dy <= 10; dy++) {
-    if (dy >= -2 && dy <= 2) continue;
-    int py = cy + dy;
-    if (py >= 0 && py < (int)graphics_get_vres())
-      graphics_draw_pixel((uint16_t) cx, (uint16_t) py, COL_CURSOR);
-  }
-  graphics_draw_rectangle((uint16_t)(cx - 1), (uint16_t)(cy - 1),
-                           3, 3, COL_CURSOR_DOT);
+  graphics_draw_crosshair(cx, cy);
 }
 
 /* ------------------------------------------------------------------ */
@@ -231,14 +216,9 @@ static void draw_main_screen(const Menu *m) {
   graphics_draw_rectangle(TITLE_X,     TITLE_Y,     TITLE_W,     TITLE_H,     COL_BORDER);
   graphics_draw_rectangle(TITLE_X + 2, TITLE_Y + 2, TITLE_W - 4, TITLE_H - 4, COL_TITLE_BOX);
   {
-    int w = font_string_width("STAR", 5);
-    font_draw_string((int)graphics_get_hres() / 2 - w / 2, TITLE_Y + 14, "STAR", COL_STAR_WORD, 5);
+    font_draw_string_centred((int)graphics_get_hres() / 2, TITLE_Y + 14, "STAR", COL_STAR_WORD, 5);
+    font_draw_string_centred((int)graphics_get_hres() / 2, TITLE_Y + 86, "SHOOTER", COL_SHOOT_WORD, 4);
   }
-  {
-    int w = font_string_width("SHOOTER", 4);
-    font_draw_string((int)graphics_get_hres() / 2 - w / 2, TITLE_Y + 86, "SHOOTER", COL_SHOOT_WORD, 4);
-  }
-
   /* Separator */
   graphics_draw_hline((uint16_t) TITLE_X, (uint16_t)(TITLE_Y + TITLE_H + 4),
                       (uint16_t) TITLE_W, COL_SEP);
@@ -281,8 +261,7 @@ static void draw_main_screen(const Menu *m) {
   /* Controls section */
   {
     int cy = CTRL_Y;
-    int hw = font_string_width("CONTROLS", 2);
-    font_draw_string((int)graphics_get_hres() / 2 - hw / 2, cy, "CONTROLS", COL_CTRL_HDR, 2);
+    font_draw_string_centred((int)graphics_get_hres() / 2, cy, "CONTROLS", COL_CTRL_HDR, 2);
     cy += FONT_GLYPH_H * 2 + 6;
     graphics_draw_hline(210, (uint16_t) cy, (int)graphics_get_hres() - 420, COL_SEP);
     cy += 6;
@@ -293,8 +272,7 @@ static void draw_main_screen(const Menu *m) {
       "ESC     -   QUIT GAME",
     };
     for (int i = 0; i < 4; i++) {
-      int rw = font_string_width(ROWS[i], 2);
-      font_draw_string((int)graphics_get_hres() / 2 - rw / 2, cy, ROWS[i], COL_CTRL_TEXT, 2);
+      font_draw_string_centred((int)graphics_get_hres() / 2, cy, ROWS[i], COL_CTRL_TEXT, 2);
       cy += FONT_GLYPH_H * 2 + 4;
     }
   }
@@ -302,8 +280,7 @@ static void draw_main_screen(const Menu *m) {
   /* Bottom hint */
   {
     const char *hint = "HOVER A BUTTON AND LEFT-CLICK TO SELECT";
-    int hw = font_string_width(hint, 1);
-    font_draw_string((int)graphics_get_hres() / 2 - hw / 2, (int)graphics_get_vres() - 28, hint, COL_HINT, 1);
+    font_draw_string_centred((int)graphics_get_hres() / 2, (int)graphics_get_vres() - 28, hint, COL_HINT, 1);
   }
 
   /* Mouse cursor — always on top */
@@ -319,23 +296,17 @@ static void draw_name_input_screen(const Menu *m) {
 
   /* Title */
   {
-    const char *title = "ENTER YOUR NAME";
-    int tw = font_string_width(title, 3);
-    font_draw_string(((int)graphics_get_hres() - tw) / 2, 120, title, COL_NI_BOX_BRD, 3);
+    font_draw_string_centred((int)graphics_get_hres() / 2, 120, "ENTER YOUR NAME", COL_NI_BOX_BRD, 3);
   }
 
   /* Sub-hint above box */
   {
-    const char *sub = "TYPE YOUR NAME AND PRESS ENTER";
-    int sw = font_string_width(sub, 1);
-    font_draw_string(((int)graphics_get_hres() - sw) / 2, 290, sub, COL_NI_HINT, 1);
+    font_draw_string_centred((int)graphics_get_hres() / 2, 290, "TYPE YOUR NAME AND PRESS ENTER", COL_NI_HINT, 1);
   }
 
   /* Empty-name warning (shown only when attempted with blank field) */
   if (m->name_empty_warning) {
-    const char *warn = "NAME CANNOT BE EMPTY";
-    int ww = font_string_width(warn, 1);
-    font_draw_string(((int)graphics_get_hres() - ww) / 2, NI_BOX_Y - 28, warn, COL_NI_WARNING, 1);
+    font_draw_string_centred((int)graphics_get_hres() / 2, NI_BOX_Y - 28, "NAME CANNOT BE EMPTY", COL_NI_WARNING, 1);
   }
 
   /* Input box — outer border then inner fill */
@@ -367,11 +338,9 @@ static void draw_name_input_screen(const Menu *m) {
   /* Hints below box */
   {
     int hy = NI_BOX_Y + NI_BOX_H + 28;
-    const char *h1 = "PRESS ENTER TO PLAY";
-    font_draw_string(((int)graphics_get_hres() - font_string_width(h1, 2)) / 2, hy, h1, COL_NI_HINT, 2);
+    font_draw_string_centred((int)graphics_get_hres() / 2, hy, "PRESS ENTER TO PLAY", COL_NI_HINT, 2);
     hy += FONT_GLYPH_H * 2 + 10;
-    const char *h2 = "PRESS ESC TO CANCEL";
-    font_draw_string(((int)graphics_get_hres() - font_string_width(h2, 1)) / 2, hy, h2, COL_NI_CANCEL, 1);
+    font_draw_string_centred((int)graphics_get_hres() / 2, hy, "PRESS ESC TO CANCEL", COL_NI_CANCEL, 1);
   }
 }
 

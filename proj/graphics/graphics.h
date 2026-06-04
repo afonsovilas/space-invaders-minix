@@ -49,4 +49,12 @@ unsigned graphics_get_bytes_per_line(void);
 /** Return bytes per pixel. */
 unsigned graphics_get_bytes_per_pixel(void);
 
+/**
+ * Draw a crosshair cursor centred on (cx, cy).
+ * Horizontal and vertical arms of 7 px each with a 5-px gap at the centre;
+ * a 3×3 red dot marks the exact hotspot.
+ * Arms are clamped to the screen boundary automatically.
+ */
+void graphics_draw_crosshair(int cx, int cy);
+
 #endif

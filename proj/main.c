@@ -18,25 +18,6 @@
 /* Crosshair cursor – drawn in game mode after game_draw()            */
 /* ------------------------------------------------------------------ */
 
-static void draw_crosshair(int cx, int cy) {
-  /* Horizontal arms (gap of ±3 px around centre) */
-  if (cx > 12)
-    graphics_draw_hline((uint16_t)(cx - 10), (uint16_t) cy, 7, 0x0Fu);
-  if (cx < 1011)
-    graphics_draw_hline((uint16_t)(cx + 4),  (uint16_t) cy, 7, 0x0Fu);
-
-  /* Vertical arms */
-  for (int dy = -10; dy <= 10; dy++) {
-    if (dy >= -2 && dy <= 2) continue;
-    int py = cy + dy;
-    if (py >= 0 && py < (int)graphics_get_vres())
-      graphics_draw_pixel((uint16_t) cx, (uint16_t) py, 0x0Fu);
-  }
-
-  /* Centre dot */
-  graphics_draw_rectangle((uint16_t)(cx - 1), (uint16_t)(cy - 1), 3, 3, 0x0Cu);
-}
-
 /* ------------------------------------------------------------------ */
 /* Main entry points                                                   */
 /* ------------------------------------------------------------------ */
@@ -232,7 +213,7 @@ int(proj_main_loop)(int argc, char *argv[]) {
         graphics_clear(0x00u);
         game_update(&game);
         game_draw(&game);
-        draw_crosshair(game.mouse.x, game.mouse.y);
+        graphics_draw_crosshair(game.mouse.x, game.mouse.y);
         graphics_flush();
 
       } else if (state == GAME_STATE_SCOREBOARD) {

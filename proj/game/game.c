@@ -416,40 +416,22 @@ static void game_aliens_shoot(Game *game) {
     }
 }
 
-static void game_check_player_bullet_shield_collision(Game *game) {
-    for (int b = 0; b < MAX_PLAYER_BULLETS; b++) {
-        if (game->player_bullets[b].active) {
+static void game_check_bullet_shield_collisions(Game *game,
+                                                Bullet *bullets,
+                                                int bullet_count) {
+    for (int b = 0; b < bullet_count; b++) {
+        if (bullets[b].active) {
             for (int i = 0; i < SHIELD_COUNT; i++) {
                 if (game->shields.shields[i].alive) {
-                    if (check_collision(game->player_bullets[b].x, game->player_bullets[b].y,
-                                        game->player_bullets[b].width, game->player_bullets[b].height,
+                    if (check_collision(bullets[b].x, bullets[b].y,
+                                        bullets[b].width, bullets[b].height,
                                         game->shields.shields[i].x, game->shields.shields[i].y,
                                         game->shields.shields[i].width, game->shields.shields[i].height)) {
-                        game_spawn_explosion(game, game->shields.shields[i].x, game->shields.shields[i].y, EXPLOSION_TYPE_SHIELD, 90, 30);
+                        game_spawn_explosion(game, game->shields.shields[i].x, game->shields.shields[i].y,
+                                             EXPLOSION_TYPE_SHIELD, 90, 30);
                         shield_erase(&game->shields, i, game->background_color);
                         shield_destroy(&game->shields, i);
-                        game->player_bullets[b].active = false;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-}
-
-static void game_check_alien_bullet_shield_collision(Game *game) {
-    for (int b = 0; b < MAX_ALIEN_BULLETS; b++) {
-        if (game->alien_bullets[b].active) {
-            for (int i = 0; i < SHIELD_COUNT; i++) {
-                if (game->shields.shields[i].alive) {
-                    if (check_collision(game->alien_bullets[b].x, game->alien_bullets[b].y,
-                                        game->alien_bullets[b].width, game->alien_bullets[b].height,
-                                        game->shields.shields[i].x, game->shields.shields[i].y,
-                                        game->shields.shields[i].width, game->shields.shields[i].height)) {
-                        game_spawn_explosion(game, game->shields.shields[i].x, game->shields.shields[i].y, EXPLOSION_TYPE_SHIELD, 90, 30);
-                        shield_erase(&game->shields, i, game->background_color);
-                        shield_destroy(&game->shields, i);
-                        game->alien_bullets[b].active = false;
+                        bullets[b].active = false;
                         break;
                     }
                 }
@@ -518,8 +500,8 @@ void game_update(Game *game) {
 
     game_aliens_shoot(game);
 
-    game_check_player_bullet_shield_collision(game);
-    game_check_alien_bullet_shield_collision(game);
+    game_check_bullet_shield_collisions(game, game->player_bullets, MAX_PLAYER_BULLETS);
+    game_check_bullet_shield_collisions(game, game->alien_bullets,  MAX_ALIEN_BULLETS);
     game_check_player_bullet_alien_collision(game);
 }
 

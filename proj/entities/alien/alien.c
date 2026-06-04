@@ -344,6 +344,46 @@ bool alien_swarm_reached_player(const AlienSwarm *swarm, int player_y) {
     return false;
 }
 
+/**
+ * Search for a random alive alien to act as shooter.
+ * Picks a random column order (without repetition) and returns the index of
+ * the lowest alive alien in the first column that has one.
+ * Does NOT touch shoot_counter — callers are responsible for that.
+ *
+ * @return true and sets *alien_index on success; false if no alive alien found.
+ */
+static bool find_random_column_shooter(const AlienSwarm *swarm, int *alien_index) {
+    bool tried_columns[ALIEN_COLS];
+
+    for (int col = 0; col < ALIEN_COLS; col++) {
+        tried_columns[col] = false;
+    }
+
+    int columns_tried = 0;
+
+    while (columns_tried < ALIEN_COLS) {
+        int col = random_between(0, ALIEN_COLS - 1);
+
+        if (tried_columns[col]) {
+            continue;
+        }
+
+        tried_columns[col] = true;
+        columns_tried++;
+
+        for (int row = ALIEN_ROWS - 1; row >= 0; row--) {
+            int i = row * ALIEN_COLS + col;
+
+            if (swarm->aliens[i].alive) {
+                *alien_index = i;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 bool alien_swarm_get_shooter(AlienSwarm *swarm, int *alien_index) {
     if (swarm == NULL || alien_index == NULL) {
         return false;
@@ -355,41 +395,9 @@ bool alien_swarm_get_shooter(AlienSwarm *swarm, int *alien_index) {
         return false;
     }
 
-    /*
-      Random shooter:
-      choose a random column, then use the lowest alive alien in that column.
-    */
-    bool tried_columns[ALIEN_COLS];
-
-    for (int col = 0; col < ALIEN_COLS; col++) {
-        tried_columns[col] = false;
-    }
-
-    int columns_tried = 0;
-
-    while (columns_tried < ALIEN_COLS) {
-        int col = random_between(0, ALIEN_COLS - 1);
-
-        if (tried_columns[col]) {
-            continue;
-        }
-
-        tried_columns[col] = true;
-        columns_tried++;
-
-        for (int row = ALIEN_ROWS - 1; row >= 0; row--) {
-            int i = row * ALIEN_COLS + col;
-
-            if (swarm->aliens[i].alive) {
-                *alien_index = i;
-                swarm->shoot_counter = 0;
-                return true;
-            }
-        }
-    }
-
+    bool found = find_random_column_shooter(swarm, alien_index);
     swarm->shoot_counter = 0;
-    return false;
+    return found;
 }
 
 bool alien_swarm_get_random_shooter_immediate(const AlienSwarm *swarm, int *alien_index) {
@@ -397,41 +405,7 @@ bool alien_swarm_get_random_shooter_immediate(const AlienSwarm *swarm, int *alie
         return false;
     }
 
-    /*
-      Choose a random column.
-      In that column, pick the lowest alive alien.
-      Does NOT use shoot_counter.
-      This is for extra simultaneous shots.
-    */
-    bool tried_columns[ALIEN_COLS];
-
-    for (int col = 0; col < ALIEN_COLS; col++) {
-        tried_columns[col] = false;
-    }
-
-    int columns_tried = 0;
-
-    while (columns_tried < ALIEN_COLS) {
-        int col = random_between(0, ALIEN_COLS - 1);
-
-        if (tried_columns[col]) {
-            continue;
-        }
-
-        tried_columns[col] = true;
-        columns_tried++;
-
-        for (int row = ALIEN_ROWS - 1; row >= 0; row--) {
-            int i = row * ALIEN_COLS + col;
-
-            if (swarm->aliens[i].alive) {
-                *alien_index = i;
-                return true;
-            }
-        }
-    }
-
-    return false;
+    return find_random_column_shooter(swarm, alien_index);
 }
 
 void alien_kill(AlienSwarm *swarm, int alien_index) {

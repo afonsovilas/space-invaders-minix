@@ -113,3 +113,10 @@ int font_string_width(const char *str, int scale) {
   /* Total = (chars × step) − last spacing */
   return len * (FONT_GLYPH_W + FONT_SPACING) * scale - FONT_SPACING * scale;
 }
+
+void font_draw_string_centred(int cx, int y, const char *str,
+                               uint32_t color, int scale) {
+  if (str == NULL) return;
+  int x = cx - font_string_width(str, scale) / 2;
+  font_draw_string(x, y, str, color, scale);
+}
