@@ -212,9 +212,9 @@ int(proj_main_loop)(int argc, char *argv[]) {
         /* Check if the menu produced an action */
         MenuAction action = menu_get_action(&menu);
         if (action == MENU_ACTION_PLAY) {
-          strncpy(game.player_name, menu_get_player_name(&menu),
+          strncpy(game.player.name, menu_get_player_name(&menu),
                   SCOREBOARD_NAME_LEN - 1);
-          game.player_name[SCOREBOARD_NAME_LEN - 1] = '\0';
+          game.player.name[SCOREBOARD_NAME_LEN - 1] = '\0';
           game_start(&game);
           menu_init(&menu);
         } else if (action == MENU_ACTION_SCORES) {

@@ -12,7 +12,6 @@
 
 #define MAX_PLAYER_BULLETS 3
 #define MAX_ALIEN_BULLETS 8
-#define MAX_LIVES 3
 
 #define MAX_EXPLOSIONS 15
 #define EXPLOSION_FRAME_DURATION 3
@@ -65,13 +64,8 @@ typedef struct {
   AlienSwarm alien_swarm;
   ShieldArray shields;
 
-  int score;
-  int lives;
-
   int wave;
   int difficulty;
-
-  char player_name[SCOREBOARD_NAME_LEN];
 
   Scoreboard scoreboard;
 
@@ -79,13 +73,6 @@ typedef struct {
 
   int screen_width;
   int screen_height;
-
-  bool moving_left;
-  bool moving_right;
-
-  bool is_blinking;
-  int blink_timer;
-  bool blink_show;
 
   MouseState mouse;
 

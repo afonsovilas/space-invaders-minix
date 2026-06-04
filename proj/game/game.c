@@ -22,11 +22,6 @@
 
 #define HUD_H 34   /* height of the HUD bar in pixels */
 
-/* Blinking & lives drawing constants */
-#define LIVES_COLOR      0x0Cu      
-#define BLINK_DURATION   45      
-#define BLINK_INTERVAL   6       
-
 #define LIVES_START_X    20
 #define LIVES_START_Y    20
 #define LIVES_WIDTH      20
@@ -120,7 +115,7 @@ static int game_alien_bullet_speed_for_wave(const Game *game) {
  * scoreboard screen.
  */
 static void game_end(Game *game) {
-  scoreboard_add(&game->scoreboard, game->player_name, game->score);
+  scoreboard_add(&game->scoreboard, game->player.name, game->player.score);
   game->state = GAME_STATE_SCOREBOARD;
 }
 
@@ -138,20 +133,8 @@ int game_init(Game *game, int screen_width, int screen_height) {
   game->screen_height    = screen_height;
   game->background_color = BACKGROUND_COLOR;
 
-  game->score            = 0;
-  game->lives            = MAX_LIVES;
-
   game->wave             = 1;
   game->difficulty       = 1;
-
-  memset(game->player_name, 0, sizeof(game->player_name));
-
-  game->moving_left      = false;
-  game->moving_right     = false;
-
-  game->is_blinking      = false;
-  game->blink_timer      = 0;
-  game->blink_show       = true;
 
   /* Cursor starts centred */
   game->mouse.x          = screen_width  / 2;
@@ -216,13 +199,7 @@ void game_next_wave(Game *game) {
     }
 
     player_reset_position(&game->player);
-
-    game->moving_left = false;
-    game->moving_right = false;
-
-    game->is_blinking = false;
-    game->blink_timer = 0;
-    game->blink_show = true;
+    player_reset_state(&game->player);
 
     /*
       New random alien formation.
@@ -271,20 +248,6 @@ static void game_update_explosions(Game *game) {
     }
 }
 
-static void game_update_blinking(Game *game) {
-    if (game->is_blinking) {
-        game->blink_timer--;
-        if (game->blink_timer <= 0) {
-            game->is_blinking = false;
-            game->blink_show = true;
-        } else {
-            if (game->blink_timer % BLINK_INTERVAL == 0) {
-                game->blink_show = !game->blink_show;
-            }
-        }
-    }
-}
-
 static void game_erase_entities(Game *game) {
     player_erase(&game->player, game->background_color);
 
@@ -312,11 +275,11 @@ static void game_erase_entities(Game *game) {
 }
 
 static void game_update_positions(Game *game) {
-    if (game->moving_left) {
+    if (game->player.moving_left) {
         player_move_left(&game->player, game->screen_width);
     }
 
-    if (game->moving_right) {
+    if (game->player.moving_right) {
         player_move_right(&game->player, game->screen_width);
     }
 
@@ -347,17 +310,13 @@ static void game_check_player_hit(Game *game) {
 
                 game->alien_bullets[i].active = false;
 
-                if (!game->is_blinking) {
-                    game->lives--;
+                if (!game->player.is_blinking) {
+                    player_on_hit(&game->player);
 
-                    if (game->lives <= 0) {
+                    if (game->player.lives <= 0) {
                         game_end(game);
                         return;
                     }
-
-                    game->is_blinking = true;
-                    game->blink_timer = BLINK_DURATION;
-                    game->blink_show = false;
                 }
             }
         }
@@ -512,13 +471,13 @@ static void game_check_player_bullet_alien_collision(Game *game) {
                         game_spawn_explosion(game, game->alien_swarm.aliens[i].x, game->alien_swarm.aliens[i].y, EXPLOSION_TYPE_ALIEN, 40, 25);
                         alien_kill(&game->alien_swarm, i);
                         game->player_bullets[b].active = false;
-                        game->score += 100;
-                        
+                        game->player.score += 100;
+
                         if (alien_swarm_all_dead(&game->alien_swarm)) {
                             game_next_wave(game);
                             return;
                         }
-                        
+
                         break;
                     }
                 }
@@ -533,32 +492,32 @@ void game_update(Game *game) {
     if (game == NULL || game->state != GAME_STATE_PLAYING) {
         return;
     }
-    
+
     /* Mouse click fires bullet (edge-triggered) */
     if (game->mouse.lb && !game->mouse.lb_prev) {
         game_fire_player_bullet(game);
     }
     game->mouse.lb_prev = game->mouse.lb;
-    
-    game_update_blinking(game);
+
+    player_update_blinking(&game->player);
     game_erase_entities(game);
     game_update_positions(game);
     game_update_explosions(game);
-    
+
     game_check_player_hit(game);
     if (game->state != GAME_STATE_PLAYING) {
         return;
     }
-    
+
     alien_swarm_update(&game->alien_swarm, game->screen_width);
-    
+
     if (alien_swarm_reached_player(&game->alien_swarm, game->player.y)) {
         game_end(game);
         return;
     }
-    
+
     game_aliens_shoot(game);
-    
+
     game_check_player_bullet_shield_collision(game);
     game_check_alien_bullet_shield_collision(game);
     game_check_player_bullet_alien_collision(game);
@@ -573,19 +532,19 @@ void game_draw(Game *game) {
 
   /* Score */
   char buf[20];
-  build_hud_str("SCORE ", game->score, buf, (int) sizeof(buf));
+  build_hud_str("SCORE ", game->player.score, buf, (int) sizeof(buf));
   font_draw_string(10, 9, buf, HUD_SCORE_COLOR, 2);
 
   build_hud_str("WAVE ", game->wave, buf, (int) sizeof(buf));
   font_draw_string(250, 9, buf, 0x0Fu, 2);
 
   /* Lives (blinks when a life is lost / player is hit) */
-  if (!game->is_blinking || game->blink_show) {
+  if (player_is_visible(&game->player)) {
       int heart_w = 21;
       int spacing = 5;
       int lives_y = 8;
       char lives_buf[10];
-      build_hud_str(": ", game->lives, lives_buf, (int) sizeof(lives_buf));
+      build_hud_str(": ", game->player.lives, lives_buf, (int) sizeof(lives_buf));
       int text_w = font_string_width(lives_buf, 2);
       int start_x = game->screen_width - (heart_w + spacing + text_w) - 10;
       graphics_draw_xpm((xpm_map_t) HEART_SPRITE, (uint16_t) start_x, (uint16_t) lives_y);
@@ -593,7 +552,7 @@ void game_draw(Game *game) {
   }
 
   /* --- Game objects --- */
-  if (!game->is_blinking || game->blink_show) {
+  if (player_is_visible(&game->player)) {
     player_draw(&game->player);
   }
 
@@ -663,10 +622,10 @@ void game_handle_keyboard_input(Game *game, uint8_t scancode, bool *running) {
   }
 
   if (game->state == GAME_STATE_PLAYING) {
-    if      (scancode == KBD_A_MAKE)     game->moving_left  = true;
-    else if (scancode == KBD_A_BREAK)    game->moving_left  = false;
-    if      (scancode == KBD_D_MAKE)     game->moving_right = true;
-    else if (scancode == KBD_D_BREAK)    game->moving_right = false;
+    if      (scancode == KBD_A_MAKE)     game->player.moving_left  = true;
+    else if (scancode == KBD_A_BREAK)    game->player.moving_left  = false;
+    if      (scancode == KBD_D_MAKE)     game->player.moving_right = true;
+    else if (scancode == KBD_D_BREAK)    game->player.moving_right = false;
     if      (scancode == KBD_SPACE_MAKE) game_fire_player_bullet(game);
   }
 }
@@ -689,12 +648,12 @@ GameState game_get_state(const Game *game) {
 
 int game_get_score(const Game *game) {
   if (game == NULL) return 0;
-  return game->score;
+  return game->player.score;
 }
 
 int game_get_lives(const Game *game) {
   if (game == NULL) return 0;
-  return game->lives;
+  return game->player.lives;
 }
 
 int game_get_wave(const Game *game) {
