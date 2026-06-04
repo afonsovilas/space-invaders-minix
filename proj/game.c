@@ -1,4 +1,5 @@
 #include "game.h"
+#include "sprites.h"
 #include "graphics.h"
 #include "keyboard.h"
 #include "font.h"
@@ -177,6 +178,10 @@ int game_init(Game *game, int screen_width, int screen_height) {
   alien_swarm_apply_difficulty(&game->alien_swarm, game->difficulty);
   if (shield_array_init(&game->shields)          != 0) return -1;
 
+  for (int i = 0; i < MAX_EXPLOSIONS; i++) {
+    game->explosions[i].active = false;
+  }
+
   scoreboard_load(&game->scoreboard);
 
   return 0;
@@ -228,11 +233,43 @@ void game_next_wave(Game *game) {
       Apply stronger wave difficulty.
     */
     alien_swarm_apply_difficulty(&game->alien_swarm, game->difficulty);
+
+    for (int i = 0; i < MAX_EXPLOSIONS; i++) {
+        game->explosions[i].active = false;
+    }
 }
 
 
 
 /* --- Funções Auxiliares de Atualização de Frame (SRP) --- */
+
+static void game_spawn_explosion(Game *game, int x, int y, ExplosionType type, int width, int height) {
+    if (game == NULL) return;
+    for (int i = 0; i < MAX_EXPLOSIONS; i++) {
+        if (!game->explosions[i].active) {
+            game->explosions[i].active = true;
+            game->explosions[i].x = x;
+            game->explosions[i].y = y;
+            game->explosions[i].width = width;
+            game->explosions[i].height = height;
+            game->explosions[i].frame = 0;
+            game->explosions[i].type = type;
+            break;
+        }
+    }
+}
+
+static void game_update_explosions(Game *game) {
+    if (game == NULL) return;
+    for (int i = 0; i < MAX_EXPLOSIONS; i++) {
+        if (game->explosions[i].active) {
+            game->explosions[i].frame++;
+            if (game->explosions[i].frame >= NUM_EXPLOSION_FRAMES * EXPLOSION_FRAME_DURATION) {
+                game->explosions[i].active = false;
+            }
+        }
+    }
+}
 
 static void game_update_blinking(Game *game) {
     if (game->is_blinking) {
@@ -264,6 +301,14 @@ static void game_erase_entities(Game *game) {
     }
 
     alien_swarm_erase(&game->alien_swarm, game->background_color);
+
+    for (int i = 0; i < MAX_EXPLOSIONS; i++) {
+        if (game->explosions[i].active) {
+            graphics_draw_rectangle(game->explosions[i].x, game->explosions[i].y,
+                                    game->explosions[i].width, game->explosions[i].height,
+                                    game->background_color);
+        }
+    }
 }
 
 static void game_update_positions(Game *game) {
@@ -421,6 +466,7 @@ static void game_check_player_bullet_shield_collision(Game *game) {
                                         game->player_bullets[b].width, game->player_bullets[b].height,
                                         game->shields.shields[i].x, game->shields.shields[i].y,
                                         game->shields.shields[i].width, game->shields.shields[i].height)) {
+                        game_spawn_explosion(game, game->shields.shields[i].x, game->shields.shields[i].y, EXPLOSION_TYPE_SHIELD, 90, 30);
                         shield_erase(&game->shields, i, game->background_color);
                         shield_destroy(&game->shields, i);
                         game->player_bullets[b].active = false;
@@ -441,6 +487,7 @@ static void game_check_alien_bullet_shield_collision(Game *game) {
                                         game->alien_bullets[b].width, game->alien_bullets[b].height,
                                         game->shields.shields[i].x, game->shields.shields[i].y,
                                         game->shields.shields[i].width, game->shields.shields[i].height)) {
+                        game_spawn_explosion(game, game->shields.shields[i].x, game->shields.shields[i].y, EXPLOSION_TYPE_SHIELD, 90, 30);
                         shield_erase(&game->shields, i, game->background_color);
                         shield_destroy(&game->shields, i);
                         game->alien_bullets[b].active = false;
@@ -462,6 +509,7 @@ static void game_check_player_bullet_alien_collision(Game *game) {
                                        game->player_bullets[b].width, game->player_bullets[b].height,
                                        game->alien_swarm.aliens[i].x, game->alien_swarm.aliens[i].y,
                                        game->alien_swarm.aliens[i].width, game->alien_swarm.aliens[i].height)) {
+                        game_spawn_explosion(game, game->alien_swarm.aliens[i].x, game->alien_swarm.aliens[i].y, EXPLOSION_TYPE_ALIEN, 40, 25);
                         alien_kill(&game->alien_swarm, i);
                         game->player_bullets[b].active = false;
                         game->score += 100;
@@ -495,6 +543,7 @@ void game_update(Game *game) {
     game_update_blinking(game);
     game_erase_entities(game);
     game_update_positions(game);
+    game_update_explosions(game);
     
     game_check_player_hit(game);
     if (game->state != GAME_STATE_PLAYING) {
@@ -554,6 +603,23 @@ void game_draw(Game *game) {
 
   alien_swarm_draw(&game->alien_swarm);
   shield_array_draw(&game->shields);
+
+  for (int i = 0; i < MAX_EXPLOSIONS; i++) {
+      if (game->explosions[i].active) {
+          int frame_idx = game->explosions[i].frame / EXPLOSION_FRAME_DURATION;
+          if (frame_idx < NUM_EXPLOSION_FRAMES) {
+              if (game->explosions[i].type == EXPLOSION_TYPE_SHIELD) {
+                  graphics_draw_xpm((xpm_map_t) SHIELD_EXPLOSION_SPRITES[frame_idx],
+                                    (uint16_t) game->explosions[i].x,
+                                    (uint16_t) game->explosions[i].y);
+              } else {
+                  graphics_draw_xpm((xpm_map_t) EXPLOSION_SPRITES[frame_idx],
+                                    (uint16_t) game->explosions[i].x,
+                                    (uint16_t) game->explosions[i].y);
+              }
+          }
+      }
+  }
 }
 
 void game_erase(Game *game) {
@@ -578,6 +644,14 @@ void game_erase(Game *game) {
   for (int i = 0; i < SHIELD_COUNT; i++) {
     if (game->shields.shields[i].alive) {
       shield_erase(&game->shields, i, game->background_color);
+    }
+  }
+
+  for (int i = 0; i < MAX_EXPLOSIONS; i++) {
+    if (game->explosions[i].active) {
+      graphics_draw_rectangle(game->explosions[i].x, game->explosions[i].y,
+                              game->explosions[i].width, game->explosions[i].height,
+                              game->background_color);
     }
   }
 }

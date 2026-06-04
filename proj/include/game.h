@@ -14,6 +14,31 @@
 #define MAX_ALIEN_BULLETS 8
 #define MAX_LIVES 3
 
+#define MAX_EXPLOSIONS 15
+#define EXPLOSION_FRAME_DURATION 3
+#define NUM_EXPLOSION_FRAMES 4
+
+/**
+ * Type of explosion animation.
+ */
+typedef enum {
+  EXPLOSION_TYPE_ALIEN,
+  EXPLOSION_TYPE_SHIELD
+} ExplosionType;
+
+/**
+ * Structure representing an explosion.
+ */
+typedef struct {
+  int x;
+  int y;
+  int width;
+  int height;
+  int frame;
+  bool active;
+  ExplosionType type;
+} Explosion;
+
 /**
  * @defgroup game Game
  * Core game state machine for Star Shooter.
@@ -65,6 +90,8 @@ typedef struct {
   bool blink_show;
 
   MouseState mouse;
+
+  Explosion explosions[MAX_EXPLOSIONS];
 
 } Game;
 
