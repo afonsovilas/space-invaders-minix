@@ -1,27 +1,35 @@
 PROG=proj
 
-SRCS= main.c        \
-      utils.c       \
-      keyboard.c    \
-      mouse.c       \
-      timer.c       \
-      graphics.c    \
-      font.c        \
-      player.c      \
-      alien.c       \
-      bullet.c      \
-      shield.c      \
-      game.c        \
-      menu.c        \
-      scoreboard.c
+SRCS= main.c          \
+      app.c           \
+      utils.c         \
+      keyboard.c      \
+      mouse.c         \
+      timer.c         \
+      graphics.c      \
+      font.c          \
+      player.c        \
+      alien.c         \
+      bullet.c        \
+      shield.c        \
+      game.c          \
+      game_state.c    \
+      menu.c          \
+      menu_state.c    \
+      name_input.c    \
+      name_input_state.c \
+      scoreboard.c    \
+      scoreboard_state.c
 
-.PATH: drivers/utils drivers/keyboard drivers/mouse drivers/timer \
+.PATH: app \
+       drivers/utils drivers/keyboard drivers/mouse drivers/timer \
        graphics \
        entities/player entities/alien entities/bullet entities/shield \
        game \
        ui/menu ui/scoreboard
 
 CPPFLAGS += -I. \
+            -Iapp \
             -Idrivers -Idrivers/utils \
             -Idrivers/keyboard -Idrivers/mouse -Idrivers/timer \
             -Igraphics -Igraphics/sprites \

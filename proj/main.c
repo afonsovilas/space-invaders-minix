@@ -5,21 +5,38 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "game.h"
+#include "app.h"
 #include "graphics.h"
 #include "keyboard.h"
 #include "timer.h"
 #include "mouse.h"
-#include "menu.h"
 #include "scoreboard.h"
+#include "utils.h"
 #include "i8042.h"
 
 /* ------------------------------------------------------------------ */
-/* Crosshair cursor – drawn in game mode after game_draw()            */
+/* Helper: apply a state transition if ctx->current changed           */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Called after every handler invocation.
+ * If ctx->current changed from `before`, updates the active handler
+ * pointer and calls on_enter for the new state.
+ * Returns false if the loop should stop (APP_STATE_EXIT).
+ */
+static bool apply_transition(AppContext *ctx,
+                              AppState before,
+                              const StateHandler **state) {
+  if (ctx->current == APP_STATE_EXIT) return false;
+  if (ctx->current != before) {
+    *state = &STATES[ctx->current];
+    (*state)->on_enter(ctx);
+  }
+  return true;
+}
+
 /* ------------------------------------------------------------------ */
-/* Main entry points                                                   */
+/* LCF entry points                                                    */
 /* ------------------------------------------------------------------ */
 
 int main(int argc, char *argv[]) {
@@ -34,23 +51,30 @@ int main(int argc, char *argv[]) {
 int(proj_main_loop)(int argc, char *argv[]) {
   (void) argc; (void) argv;
 
-  /* ---- Initialise graphics (VBE mode 0x105: 1024×768, 8-bit) ---- */
+  /* ---- Graphics ---- */
   if (graphics_init(0x105) != 0) {
     printf("graphics_init failed\n");
     return 1;
   }
 
-  /* ---- Initialise game state ---- */
-  Game game;
-  if (game_init(&game, (int)graphics_get_hres(), (int)graphics_get_vres()) != 0) {
+  /* ---- Application context ---- */
+  AppContext ctx;
+  memset(&ctx, 0, sizeof(ctx));
+  ctx.current  = APP_STATE_MENU;
+  ctx.screen_w = (int) graphics_get_hres();
+  ctx.screen_h = (int) graphics_get_vres();
+  ctx.cursor_x = ctx.screen_w / 2;
+  ctx.cursor_y = ctx.screen_h / 2;
+
+  /* Load persistent scoreboard once at startup */
+  scoreboard_load(&ctx.scoreboard);
+
+  /* Pre-init game entity storage (game_state_on_enter re-inits on each play) */
+  if (game_init(&ctx.game, ctx.screen_w, ctx.screen_h) != 0) {
     printf("game_init failed\n");
     vg_exit();
     return 1;
   }
-
-  /* ---- Initialise menu ---- */
-  Menu menu;
-  menu_init(&menu);
 
   /* ---- Subscribe interrupts ---- */
   uint8_t kbd_bit, timer_bit, mouse_bit;
@@ -59,42 +83,38 @@ int(proj_main_loop)(int argc, char *argv[]) {
     printf("keyboard_subscribe_int failed\n");
     vg_exit(); return 1;
   }
-
   if (game_timer_subscribe_int(&timer_bit) != 0) {
     printf("game_timer_subscribe_int failed\n");
     keyboard_unsubscribe_int(); vg_exit(); return 1;
   }
-
   if (mouse_subscribe_int(&mouse_bit) != 0) {
     printf("mouse_subscribe_int failed\n");
     game_timer_unsubscribe_int(); keyboard_unsubscribe_int(); vg_exit(); return 1;
   }
-
-  /* Set mouse to stream mode and enable data reporting */
   if (mouse_setup_stream() != 0)
     printf("mouse_setup_stream failed (continuing)\n");
 
-  uint32_t kbd_irq   = BIT(kbd_bit);
-  uint32_t timer_irq = BIT(timer_bit);
-  uint32_t mouse_irq = BIT(mouse_bit);
+  const uint32_t kbd_irq   = BIT(kbd_bit);
+  const uint32_t timer_irq = BIT(timer_bit);
+  const uint32_t mouse_irq = BIT(mouse_bit);
 
   /* ---- Mouse packet accumulator ---- */
   uint8_t mouse_bytes[3];
   uint8_t mouse_idx = 0;
 
-  /* ---- Absolute cursor position (shared between menu and game) ---- */
-  int cursor_x = 512;
-  int cursor_y = 384;
+  /* ---- Enter initial state ---- */
+  const StateHandler *state = &STATES[APP_STATE_MENU];
+  state->on_enter(&ctx);
 
-  /* ---- Draw initial menu frame ---- */
-  menu_draw(&menu);
+  /* Initial draw */
+  state->draw(&ctx);
   graphics_flush();
 
   /* ---------------------------------------------------------------- */
   /* Event loop                                                        */
   /* ---------------------------------------------------------------- */
-  bool running = true;
-  int  ipc_status;
+  bool    running    = true;
+  int     ipc_status;
   message msg;
 
   while (running) {
@@ -103,36 +123,34 @@ int(proj_main_loop)(int argc, char *argv[]) {
     if (!is_ipc_notify(ipc_status)) continue;
     if (_ENDPOINT_P(msg.m_source) != HARDWARE) continue;
 
-    uint32_t ints = msg.m_notify.interrupts;
+    const uint32_t ints = msg.m_notify.interrupts;
 
     /* ============================================================== */
-    /* Keyboard interrupt                                              */
+    /* Keyboard                                                        */
     /* ============================================================== */
     if (ints & kbd_irq) {
       keyboard_ih();
       if (keyboard_has_data()) {
         uint8_t sc = keyboard_get_byte();
         keyboard_clear_data();
-      
-        if (menu_is_name_input_active(&menu)) {
-          menu_name_input_handle_key(&menu, sc);
-        } else {
-          game_handle_keyboard_input(&game, sc, &running);
-        }
+
+        AppState before = ctx.current;
+        state->handle_key(&ctx, sc);
+        if (!apply_transition(&ctx, before, &state)) running = false;
       }
     }
 
     /* ============================================================== */
-    /* Mouse interrupt                                                 */
+    /* Mouse                                                           */
     /* ============================================================== */
     if (ints & mouse_irq) {
       mouse_ih();
       if (mouse_has_byte()) {
         uint8_t byte = mouse_get_byte();
 
-        /* Synchronise on first byte: must have SYNC bit set */
+        /* Synchronise on first byte (must have SYNC bit) */
         if (mouse_idx == 0 && !(byte & MOUSE_SYNC_BIT)) {
-          /* Out of sync – discard */
+          /* Out of sync — discard */
         } else {
           mouse_bytes[mouse_idx++] = byte;
 
@@ -141,8 +159,6 @@ int(proj_main_loop)(int argc, char *argv[]) {
 
             /* Skip overflow packets */
             if (!(mouse_bytes[0] & (MOUSE_X_OV | MOUSE_Y_OV))) {
-
-              /* Parse delta (sign-extend from 9-bit two's complement) */
               int16_t dx = (mouse_bytes[0] & MOUSE_X_SIGN)
                            ? (int16_t)(0xFF00u | mouse_bytes[1])
                            : (int16_t) mouse_bytes[1];
@@ -152,27 +168,17 @@ int(proj_main_loop)(int argc, char *argv[]) {
 
               bool lb = (mouse_bytes[0] & MOUSE_LB) != 0;
 
-              /* Update shared cursor (Y inverted: up = negative screen Y) */
-              cursor_x += dx;
-              cursor_y -= dy;
-              if (cursor_x < 0)    cursor_x = 0;
-              if (cursor_y < 0)    cursor_y = 0;
-              if (cursor_x >= (int)graphics_get_hres()) cursor_x = (int)graphics_get_hres() - 1;
-              if (cursor_y >= (int)graphics_get_vres()) cursor_y = (int)graphics_get_vres() - 1;
+              /* Update absolute cursor (Y inverted: up = negative screen Y) */
+              int nx = ctx.cursor_x + dx;
+              int ny = ctx.cursor_y - dy;
+              if (nx < 0) nx = 0;
+              if (ny < 0) ny = 0;
+              if (nx >= ctx.screen_w) nx = ctx.screen_w - 1;
+              if (ny >= ctx.screen_h) ny = ctx.screen_h - 1;
 
-              GameState state = game_get_state(&game);
-
-              if (state == GAME_STATE_MENU) {
-                menu_update(&menu, cursor_x, cursor_y, lb);
-              } else if (state == GAME_STATE_SCOREBOARD) {
-                (void) lb;
-              } else {
-                /* Propagate cursor + button state to game */
-                game.mouse.x  = cursor_x;
-                game.mouse.y  = cursor_y;
-                game.mouse.lb = lb;
-                game.mouse.rb = (mouse_bytes[0] & MOUSE_RB) != 0;
-              }
+              AppState before = ctx.current;
+              state->handle_mouse(&ctx, nx, ny, lb);
+              if (!apply_transition(&ctx, before, &state)) running = false;
             }
           }
         }
@@ -180,57 +186,33 @@ int(proj_main_loop)(int argc, char *argv[]) {
     }
 
     /* ============================================================== */
-    /* Timer interrupt                                                 */
+    /* Timer                                                           */
     /* ============================================================== */
     if (ints & timer_irq) {
       game_timer_ih();
 
-      GameState state = game_get_state(&game);
-
-      if (state == GAME_STATE_MENU) {
-        menu_name_input_update(&menu);
-
-        /* Check if the menu produced an action */
-        MenuAction action = menu_get_action(&menu);
-        if (action == MENU_ACTION_PLAY) {
-          strncpy(game.player.name, menu_get_player_name(&menu),
-                  SCOREBOARD_NAME_LEN - 1);
-          game.player.name[SCOREBOARD_NAME_LEN - 1] = '\0';
-          game_start(&game);
-          menu_init(&menu);
-        } else if (action == MENU_ACTION_SCORES) {
-          game_enter_scoreboard(&game);
-          menu_init(&menu);
-        } else if (action == MENU_ACTION_QUIT) {
-          running = false;
-        }
-
-        /* Redraw menu every timer tick */
-        menu_draw(&menu);
-        graphics_flush();
-
-      } else if (state == GAME_STATE_PLAYING) {
-        graphics_clear(0x00u);
-        game_update(&game);
-        game_draw(&game);
-        graphics_draw_crosshair(game.mouse.x, game.mouse.y);
-        graphics_flush();
-
-      } else if (state == GAME_STATE_SCOREBOARD) {
-        game_draw_scoreboard(&game);
+      AppState before = ctx.current;
+      state->update(&ctx);
+      if (!apply_transition(&ctx, before, &state)) {
+        running = false;
+      } else {
+        state->draw(&ctx);
         graphics_flush();
       }
     }
   }
 
-  /* ---- Cleanup ---- */
-  scoreboard_free(&game.scoreboard);
+  /* ---------------------------------------------------------------- */
+  /* Cleanup                                                           */
+  /* ---------------------------------------------------------------- */
+  scoreboard_free(&ctx.scoreboard);
+
   (void) proj_mouse_disable_reporting();
   (void) mouse_unsubscribe_int();
   (void) game_timer_unsubscribe_int();
   (void) keyboard_unsubscribe_int();
 
-  /* Flush the KBC output buffer to prevent keyboard freezing on exit */
+  /* Flush KBC output buffer to prevent keyboard freeze on exit */
   uint8_t stat, data;
   while (util_sys_inb(KBC_STAT_REG, &stat) == 0 && (stat & KBC_ST_OBF)) {
     util_sys_inb(KBC_OUT_BUF, &data);
@@ -240,6 +222,6 @@ int(proj_main_loop)(int argc, char *argv[]) {
   if (vg_exit() != 0)
     printf("vg_exit failed\n");
 
-  printf("Game over. Final score: %d\n", game_get_score(&game));
+  printf("Game over. Final score: %d\n", game_get_score(&ctx.game));
   return 0;
 }
