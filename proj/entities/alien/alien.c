@@ -1,6 +1,6 @@
 #include "alien.h"
 #include "graphics.h"
-#include "sprites/alien_sprites.h"
+#include "alien_sprites.h"
 
 #include <stddef.h>
 #include <stdlib.h>
