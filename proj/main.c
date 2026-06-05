@@ -12,7 +12,6 @@
 #include "mouse.h"
 #include "scoreboard.h"
 #include "utils.h"
-#include "i8042.h"
 
 /* ------------------------------------------------------------------ */
 /* Helper: apply a state transition if ctx->current changed           */
@@ -149,7 +148,7 @@ int(proj_main_loop)(int argc, char *argv[]) {
         uint8_t byte = mouse_get_byte();
 
         /* Synchronise on first byte (must have SYNC bit) */
-        if (mouse_idx == 0 && !(byte & MOUSE_SYNC_BIT)) {
+        if (mouse_idx == 0 && !mouse_packet_is_sync(byte)) {
           /* Out of sync — discard */
         } else {
           mouse_bytes[mouse_idx++] = byte;
@@ -158,15 +157,10 @@ int(proj_main_loop)(int argc, char *argv[]) {
             mouse_idx = 0;
 
             /* Skip overflow packets */
-            if (!(mouse_bytes[0] & (MOUSE_X_OV | MOUSE_Y_OV))) {
-              int16_t dx = (mouse_bytes[0] & MOUSE_X_SIGN)
-                           ? (int16_t)(0xFF00u | mouse_bytes[1])
-                           : (int16_t) mouse_bytes[1];
-              int16_t dy = (mouse_bytes[0] & MOUSE_Y_SIGN)
-                           ? (int16_t)(0xFF00u | mouse_bytes[2])
-                           : (int16_t) mouse_bytes[2];
-
-              bool lb = (mouse_bytes[0] & MOUSE_LB) != 0;
+            if (!mouse_packet_is_overflow(mouse_bytes)) {
+              int16_t dx, dy;
+              bool lb;
+              mouse_packet_parse(mouse_bytes, &dx, &dy, &lb);
 
               /* Update absolute cursor (Y inverted: up = negative screen Y) */
               int nx = ctx.cursor_x + dx;
@@ -213,15 +207,23 @@ int(proj_main_loop)(int argc, char *argv[]) {
   (void) keyboard_unsubscribe_int();
 
   /* Flush KBC output buffer to prevent keyboard freeze on exit */
-  uint8_t stat, data;
-  while (util_sys_inb(KBC_STAT_REG, &stat) == 0 && (stat & KBC_ST_OBF)) {
-    util_sys_inb(KBC_OUT_BUF, &data);
-    tickdelay(micros_to_ticks(20000));
-  }
+  keyboard_flush_buffers();
 
   if (vg_exit() != 0)
     printf("vg_exit failed\n");
 
-  printf("Game over. Final score: %d\n", game_get_score(&ctx.game));
+  printf("\n=================================================\n");
+  printf("               S T A R   S H O O T E R           \n");
+  printf("=================================================\n");
+  printf("                                                 \n");
+  printf("   THE GALAXY IS SAFE... BUT FOR HOW LONG?       \n");
+  printf("                                                 \n");
+  printf("   Commander : %s\n", ctx.game.player.name);
+  printf("   Final Score: %d\n", game_get_score(&ctx.game));
+  printf("   Waves Survived: %d\n", game_get_wave(&ctx.game));
+  printf("                                                 \n");
+  printf("=================================================\n");
+  printf("   Thanks for playing!                           \n\n");
+
   return 0;
 }

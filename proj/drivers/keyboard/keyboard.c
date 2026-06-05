@@ -134,3 +134,11 @@ uint8_t keyboard_get_byte(void) {
 void keyboard_clear_data(void) {
   kbd_data_available = false;
 }
+
+void keyboard_flush_buffers(void) {
+  uint8_t stat, data;
+  while (util_sys_inb(KBC_STAT_REG, &stat) == 0 && (stat & KBC_ST_OBF)) {
+    util_sys_inb(KBC_OUT_BUF, &data);
+    tickdelay(micros_to_ticks(KBC_DELAY_US));
+  }
+}

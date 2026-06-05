@@ -3,6 +3,7 @@
 #include "graphics.h"
 #include "keyboard.h"
 #include "scoreboard.h"
+#include "background.h"
 
 #include <string.h>
 
@@ -22,7 +23,7 @@ void game_state_update(AppContext *ctx) {
 }
 
 void game_state_draw(const AppContext *ctx) {
-  graphics_clear(0x00u);
+  draw_starfield_background();
   game_draw(&ctx->game);
 }
 

@@ -117,6 +117,11 @@ uint8_t keyboard_get_byte(void);
  */
 void keyboard_clear_data(void);
 
+/**
+ * Flushes the KBC output buffer. Useful during application exit to prevent freezes.
+ */
+void keyboard_flush_buffers(void);
+
 /** @} */
 
 #endif
