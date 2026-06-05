@@ -24,7 +24,6 @@ void game_state_update(AppContext *ctx) {
 void game_state_draw(const AppContext *ctx) {
   graphics_clear(0x00u);
   game_draw(&ctx->game);
-  graphics_draw_crosshair(ctx->cursor_x, ctx->cursor_y);
 }
 
 void game_state_handle_key(AppContext *ctx, uint8_t sc) {
