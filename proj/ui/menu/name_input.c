@@ -4,6 +4,7 @@
 #include "menu.h"
 #include "graphics.h"
 #include "font.h"
+#include "background.h"
 
 /* ------------------------------------------------------------------ */
 /* Name-input box geometry                                             */
@@ -55,7 +56,7 @@ void name_input_update(NameInput *ni) {
 void name_input_draw(const NameInput *ni) {
   if (ni == NULL) return;
 
-  menu_draw_background();
+  draw_starfield_background();
 
   /* Title */
   font_draw_string_centred((int)graphics_get_hres() / 2, 120,

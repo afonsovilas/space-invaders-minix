@@ -19,7 +19,8 @@ SRCS= main.c          \
       name_input.c    \
       name_input_state.c \
       scoreboard.c    \
-      scoreboard_state.c
+      scoreboard_state.c \
+      background.c
 
 .PATH: app \
        drivers/utils drivers/keyboard drivers/mouse drivers/timer drivers/graphics \

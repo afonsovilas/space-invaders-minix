@@ -212,6 +212,18 @@ int(proj_main_loop)(int argc, char *argv[]) {
   if (vg_exit() != 0)
     printf("vg_exit failed\n");
 
-  printf("Game over. Final score: %d\n", game_get_score(&ctx.game));
+  printf("\n=================================================\n");
+  printf("               S T A R   S H O O T E R           \n");
+  printf("=================================================\n");
+  printf("                                                 \n");
+  printf("   THE GALAXY IS SAFE... BUT FOR HOW LONG?       \n");
+  printf("                                                 \n");
+  printf("   Commander : %s\n", ctx.game.player.name);
+  printf("   Final Score: %d\n", game_get_score(&ctx.game));
+  printf("   Waves Survived: %d\n", game_get_wave(&ctx.game));
+  printf("                                                 \n");
+  printf("=================================================\n");
+  printf("   Thanks for playing!                           \n\n");
+
   return 0;
 }

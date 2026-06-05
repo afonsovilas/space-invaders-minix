@@ -69,12 +69,6 @@ MenuAction menu_get_action(const Menu *m);
  */
 void menu_draw(const Menu *m);
 
-/**
- * Renders the menu background.
- * Draws the static background image/pattern common to all menu screens.
- */
-void menu_draw_background(void);
-
 /** @} */
 
 #endif /* MENU_H */
