@@ -176,3 +176,17 @@ int mouse_setup_stream(void) {
   if (proj_mouse_enable_reporting()    != 0) return 1;
   return 0;
 }
+
+bool mouse_packet_is_sync(uint8_t byte) {
+  return (byte & MOUSE_SYNC_BIT) != 0;
+}
+
+bool mouse_packet_is_overflow(const uint8_t packet[3]) {
+  return (packet[0] & (MOUSE_X_OV | MOUSE_Y_OV)) != 0;
+}
+
+void mouse_packet_parse(const uint8_t packet[3], int16_t *dx, int16_t *dy, bool *lb) {
+  *dx = (packet[0] & MOUSE_X_SIGN) ? (int16_t)(0xFF00u | packet[1]) : (int16_t) packet[1];
+  *dy = (packet[0] & MOUSE_Y_SIGN) ? (int16_t)(0xFF00u | packet[2]) : (int16_t) packet[2];
+  *lb = (packet[0] & MOUSE_LB) != 0;
+}

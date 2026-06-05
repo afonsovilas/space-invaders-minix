@@ -99,6 +99,32 @@ uint8_t mouse_get_byte(void);
  */
 int mouse_setup_stream(void);
 
+/**
+ * Checks if the given byte is a valid first byte of a mouse packet.
+ *
+ * @param byte The byte to check.
+ * @return true if the byte has the synchronization bit set.
+ */
+bool mouse_packet_is_sync(uint8_t byte);
+
+/**
+ * Checks if a complete 3-byte mouse packet has an X or Y overflow.
+ *
+ * @param packet The 3-byte packet to check.
+ * @return true if there is an overflow, false otherwise.
+ */
+bool mouse_packet_is_overflow(const uint8_t packet[3]);
+
+/**
+ * Parses a valid 3-byte mouse packet, extracting deltas and the left button state.
+ *
+ * @param packet The 3-byte packet to parse.
+ * @param dx Pointer to store the X movement.
+ * @param dy Pointer to store the Y movement.
+ * @param lb Pointer to store the left button state.
+ */
+void mouse_packet_parse(const uint8_t packet[3], int16_t *dx, int16_t *dy, bool *lb);
+
 /** @} */
 
 #endif /* MOUSE_H */
