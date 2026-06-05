@@ -93,6 +93,12 @@ void game_next_wave(Game *game) {
   game->wave++;
   game->difficulty++;
 
+  /* Grant an extra life at the start of a new wave */
+  game->player.lives++;
+
+  /* Respawn all shields */
+  shield_array_init(&game->shields);
+
   for (int i = 0; i < MAX_PLAYER_BULLETS; i++) {
     game->player_bullets[i].active = false;
   }
@@ -102,7 +108,6 @@ void game_next_wave(Game *game) {
     game->alien_bullets[i].speed  = game_alien_bullet_speed_for_wave(game);
   }
 
-  player_reset_position(&game->player);
   player_reset_state(&game->player);
 
   alien_swarm_init(&game->alien_swarm);
