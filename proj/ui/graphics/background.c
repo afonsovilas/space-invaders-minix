@@ -1,5 +1,6 @@
 #include "background.h"
 #include "graphics.h"
+#include "sprites/earth_sprite.h"
 
 #include <stdint.h>
 
@@ -35,5 +36,26 @@ void draw_starfield_background(void) {
   for (int t = 0; t < 2; t++) {
     graphics_draw_hline(0, (uint16_t) t,                              (uint16_t)graphics_get_hres(), COL_BORDER);
     graphics_draw_hline(0, (uint16_t)(graphics_get_vres() - 1u - t), (uint16_t)graphics_get_hres(), COL_BORDER);
+  }
+}
+
+void draw_game_background(void) {
+  draw_starfield_background();
+  
+  uint16_t screen_w = graphics_get_hres();
+  uint16_t screen_h = graphics_get_vres();
+  
+  /* The Earth sprite is 300x100. We want it centered at the very bottom. */
+  uint16_t earth_w = 300;
+  uint16_t earth_h = 100;
+  
+  uint16_t ex = (screen_w / 2) - (earth_w / 2);
+  uint16_t ey = screen_h - earth_h;
+  
+  graphics_draw_xpm((xpm_map_t) EARTH_SPRITE, ex, ey);
+
+  /* Redraw the bottom frame border so the Earth appears slightly behind it */
+  for (int t = 0; t < 2; t++) {
+    graphics_draw_hline(0, (uint16_t)(screen_h - 1u - t), screen_w, COL_BORDER);
   }
 }

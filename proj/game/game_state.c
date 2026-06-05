@@ -23,7 +23,7 @@ void game_state_update(AppContext *ctx) {
 }
 
 void game_state_draw(const AppContext *ctx) {
-  draw_starfield_background();
+  draw_game_background();
   game_draw(&ctx->game);
 }
 

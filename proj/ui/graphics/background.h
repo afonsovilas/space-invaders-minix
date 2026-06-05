@@ -14,6 +14,12 @@
  */
 void draw_starfield_background(void);
 
+/**
+ * Draws the starfield background and a small Earth sprite at the bottom center.
+ * Used exclusively during gameplay to make it look like the ship is defending Earth.
+ */
+void draw_game_background(void);
+
 /** @} */
 
 #endif /* BACKGROUND_H */
