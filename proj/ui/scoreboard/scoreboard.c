@@ -152,7 +152,8 @@ void scoreboard_free(Scoreboard *sb) {
     sb->count   = 0;
 }
 
-void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h) {
+void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h,
+                     const char *current_name, int current_score) {
     if (sb == NULL || screen_w <= 0 || screen_h <= 0) return;
 
     /* ------------------------------------------------------------------ *
@@ -285,10 +286,25 @@ void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h) {
         const char *empty = "NO SCORES YET";
         const int   sc    = 2;
         font_draw_string_centred(screen_w / 2, cur_y, empty, COLOR_NORMAL, sc);
+        cur_y += FONT_GLYPH_H * sc + ROW_PAD * 2;
     }
 
     /* ------------------------------------------------------------------ *
-     * 6.  Footer                                                           *
+     * 6.  Your score (only shown after a game ends)                        *
+     * ------------------------------------------------------------------ */
+    if (current_name != NULL && current_score >= 0) {
+        const int      sc  = 2;
+        const uint32_t col = COLOR_GOLD; /* bright yellow 0x0E */
+
+        cur_y += ROW_PAD * 2;
+
+        char buf[64];
+        snprintf(buf, sizeof(buf), "YOUR SCORE: %s %d", current_name, current_score);
+        font_draw_string_centred(screen_w / 2, cur_y, buf, col, sc);
+    }
+
+    /* ------------------------------------------------------------------ *
+     * 7.  Footer                                                           *
      * ------------------------------------------------------------------ */
     {
         const char *footer = "PRESS SPACE TO RETURN TO MENU";

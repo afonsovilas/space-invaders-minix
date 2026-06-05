@@ -71,12 +71,17 @@ void scoreboard_free(Scoreboard *sb);
 /**
  * Renders the scoreboard on screen.
  * Displays the top scores in a formatted table.
+ * If current_name is non-NULL and current_score >= 0, a highlighted
+ * "YOUR SCORE" section is shown below the rankings.
  *
- * @param sb       Pointer to Scoreboard to display
- * @param screen_w Screen width in pixels
- * @param screen_h Screen height in pixels
+ * @param sb            Pointer to Scoreboard to display
+ * @param screen_w      Screen width in pixels
+ * @param screen_h      Screen height in pixels
+ * @param current_name  Name of the current player, or NULL to omit section
+ * @param current_score Score of the current player, or -1 to omit section
  */
-void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h);
+void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h,
+                     const char *current_name, int current_score);
 
 /** @} */
 

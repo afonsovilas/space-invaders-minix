@@ -16,7 +16,8 @@ void scoreboard_state_update(AppContext *ctx) {
 
 void scoreboard_state_draw(const AppContext *ctx) {
   graphics_clear(0x00u);
-  scoreboard_draw(&ctx->scoreboard, ctx->screen_w, ctx->screen_h);
+  const char *name = ctx->game.player.name[0] != '\0' ? ctx->game.player.name : NULL;
+  scoreboard_draw(&ctx->scoreboard, ctx->screen_w, ctx->screen_h, name, ctx->game.player.score);
 }
 
 void scoreboard_state_handle_key(AppContext *ctx, uint8_t sc) {
