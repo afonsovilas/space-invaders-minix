@@ -21,7 +21,7 @@ void scoreboard_state_draw(const AppContext *ctx) {
 
 void scoreboard_state_handle_key(AppContext *ctx, uint8_t sc) {
   if (sc == KBD_SPACE_MAKE) { ctx->current = APP_STATE_MENU; return; }
-  if (sc == KBD_ESC_BREAK)  { ctx->current = APP_STATE_EXIT; return; }
+  if (sc == KBD_ESC_BREAK)  { ctx->current = APP_STATE_MENU; return; }
 }
 
 void scoreboard_state_handle_mouse(AppContext *ctx, int x, int y, bool lb) {
