@@ -163,9 +163,9 @@ void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h) {
     enum {
         COLOR_TITLE     = 0x0B, /* bright cyan   – title & decorations    */
         COLOR_HEADER    = 0x07, /* light gray    – column headers         */
-        COLOR_GOLD      = 0x06, /* dark yellow   – 1st place (gold/amber) */
-        COLOR_YELLOW    = 0x0E, /* bright yellow – 2nd place              */
-        COLOR_WHITE     = 0x0F, /* bright white  – 3rd place              */
+        COLOR_GOLD      = 0x06, /* bright yellow – 1st place (gold)       */
+        COLOR_SILVER    = 0x0E, /* light gray    – 2nd place (silver)     */
+        COLOR_BRONZE    = 0x07, /* dark yellow   – 3rd place (bronze)     */
         COLOR_NORMAL    = 0x0F, /* bright white  – 4th place and below    */
         COLOR_SEPARATOR = 0x08, /* dark gray     – separator lines        */
         COLOR_BG        = 0x00  /* black         – background             */
@@ -180,10 +180,17 @@ void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h) {
      * Per-rank visual parameters                                           *
      * rank_scale[0] → 1st place, [1] → 2nd, [2] → 3rd, [3] → 4th+       *
      * ------------------------------------------------------------------ */
-    static const uint8_t  rank_scale[4] = { 3, 2, 2, 2 };
+    static const uint8_t  rank_scale[4] = { 2, 2, 2, 2 };
     static const uint32_t rank_color[4] = {
-        COLOR_GOLD, COLOR_YELLOW, COLOR_WHITE, COLOR_NORMAL
+        COLOR_GOLD, COLOR_SILVER, COLOR_BRONZE, COLOR_NORMAL
     };
+
+    /* ------------------------------------------------------------------ *
+     * Shared column positions (used by both headers and entries)          *
+     * ------------------------------------------------------------------ */
+    const int COL_RANK  = screen_w / 4;
+    const int COL_NAME  = screen_w / 4 + 50;
+    const int COL_SCORE = screen_w * 3 / 4;
 
     int cur_y = TOP_MARGIN;
 
@@ -215,9 +222,16 @@ void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h) {
      * 3.  Column headers                                                   *
      * ------------------------------------------------------------------ */
     {
-        const char *hdr = "#   NAME             SCORE";
-        const int   sc  = 1;
-        font_draw_string_centred(screen_w / 2, cur_y, hdr, COLOR_HEADER, sc);
+        const int sc = 2;
+
+        font_draw_string(COL_RANK, cur_y, "#", COLOR_HEADER, sc);
+        font_draw_string(COL_NAME, cur_y, "NAME", COLOR_HEADER, sc);
+
+        /* Score header right-aligned to COL_SCORE */
+        const char *score_hdr = "SCORE";
+        int score_hdr_w = font_string_width(score_hdr, sc);
+        font_draw_string(COL_SCORE - score_hdr_w, cur_y, score_hdr, COLOR_HEADER, sc);
+
         cur_y += FONT_GLYPH_H * sc + ROW_PAD;
 
         /* thin separator under headers */
@@ -245,12 +259,17 @@ void scoreboard_draw(const Scoreboard *sb, int screen_w, int screen_h) {
 
         const ScoreEntry *e = &sb->entries[i];
 
-        /* Build the entry string: "#N  NAME  SCORE"                       */
-        char buf[64];
-        snprintf(buf, sizeof(buf), "#%-2d %-20s %d", i + 1, e->name, e->score);
+        /* Draw rank, name, score in their respective columns */
+        char rank_str[4];
+        snprintf(rank_str, sizeof(rank_str), "#%-2d", i + 1);
+        font_draw_string(COL_RANK, cur_y, rank_str, col, sc);
 
-        /* Centre the text horizontally                                     */
-        font_draw_string_centred(screen_w / 2, cur_y, buf, col, sc);
+        font_draw_string(COL_NAME, cur_y, e->name, col, sc);
+
+        char score_str[16];
+        snprintf(score_str, sizeof(score_str), "%d", e->score);
+        int score_w = font_string_width(score_str, sc);
+        font_draw_string(COL_SCORE - score_w, cur_y, score_str, col, sc);
 
         /* Advance y by this row's rendered height plus padding            */
         cur_y += FONT_GLYPH_H * sc + ROW_PAD * sc;
